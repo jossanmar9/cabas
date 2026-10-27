@@ -8,7 +8,7 @@ Cabàs és un projecte d’app Android lliure i gratuïta de finances personals,
 
 ## Estat
 
-En preparació. Este repositori conté la documentació inicial i el logo. Encara no hi ha codi Android, APK ni una aplicació compilable. Les funcions següents són objectius pendents.
+Primera base Android en desenvolupament (`0.1.0-dev`). Inclou registre manual d’ingressos i despeses, categories Kakebo, consulta per mesos, balanç mensual i eliminació amb confirmació. Els moviments es guarden en una base de dades Room local. Encara no és una versió publicada; pressupostos, objectius d’estalvi i exportació estan pendents.
 
 ## Principis
 
@@ -28,7 +28,7 @@ En preparació. Este repositori conté la documentació inicial i el logo. Encar
 
 ## Tecnologia prevista
 
-Kotlin, Jetpack Compose i Room. Les versions i l’Android mínim es decidiran quan s’inicialitze el projecte.
+Kotlin 2.1.20, Jetpack Compose (BOM 2025.04.01) i Room 2.7.1. Android 8.0 (API 26) o posterior, compilació i target API 35. AGP 8.9.2 i Gradle 8.11.1.
 
 ## Com començar
 
@@ -37,7 +37,19 @@ git clone https://github.com/jossanmar9/cabas.git
 cd cabas
 ```
 
-Encara no hi ha ordres de compilació ni proves; s’afegiran amb el projecte Android.
+Obri el directori en Android Studio o utilitza JDK 17 (JDK 21 també és compatible amb Gradle 8.11.1) i l’SDK d’Android amb `platforms;android-35` i `build-tools;35.0.0`. Configura `ANDROID_HOME` o `sdk.dir` en `local.properties` (no es versiona).
+
+```sh
+./gradlew testDebugUnitTest lintDebug assembleDebug
+# Amb un emulador o dispositiu Android connectat:
+./gradlew connectedDebugAndroidTest
+```
+
+APK de desenvolupament: `app/build/outputs/apk/debug/app-debug.apk`. Per instal·lar-lo: `adb install -r app/build/outputs/apk/debug/app-debug.apk`.
+
+Les proves unitàries cobreixen imports, dates i balanços. La prova instrumentada cobreix persistència després de reobrir la base de dades, límits mensuals i eliminació. El workflow de GitHub executa compilació, proves unitàries i lint; les proves instrumentades requereixen un dispositiu.
+
+**Dades:** la primera versió utilitza EUR, amb imports positius de fins a 999.999.999,99 € i dos decimals. Accepta coma o punt decimal, sense separadors de milers. L’app no demana permís d’Internet i desactiva les còpies de seguretat automàtiques d’Android. Encara no disposa d’exportació ni xifrat propi: desinstal·lar-la elimina les dades. No l’utilitzes encara com a únic registre dels teus comptes.
 
 - [Guia de contribució](CONTRIBUTING.md)
 - [Roadmap](docs/ROADMAP.md)

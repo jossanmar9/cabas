@@ -10,15 +10,15 @@ Les fases indiquen prioritats, no dates de lliurament.
 
 ## Base Android
 
-- [ ] Decidir versions, identificador de paquet i Android mínim.
-- [ ] Inicialitzar Kotlin, Compose, Gradle Wrapper i Room.
+- [x] Decidir versions, identificador de paquet i Android mínim.
+- [x] Inicialitzar Kotlin, Compose, Gradle Wrapper i Room.
 - [ ] Preparar recursos en valencià, tema i navegació accessible.
 - [ ] Verificar i documentar la compilació local.
 
 ## Primera versió útil · v0.1.0 prevista
 
-- [ ] Registre manual d’ingressos i despeses.
-- [ ] Categories i consulta mensual de moviments.
+- [x] Registre manual d’ingressos i despeses.
+- [x] Categories i consulta mensual de moviments.
 - [ ] Pressupost, objectiu d’estalvi i resum mensual.
 - [ ] Persistència local i proves de càlculs i dades.
 

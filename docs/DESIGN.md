@@ -6,15 +6,15 @@ Cabàs facilita el registre conscient dels diners, la planificació i la reflexi
 
 ## Privacitat
 
-Funcionament local i offline, sense comptes ni serveis externs necessaris. Les exportacions les iniciarà l’usuari. Guardar dades al dispositiu no implica xifrat: les mesures de protecció, els permisos i les còpies automàtiques d’Android es revisaran durant la implementació.
+Sense permís d’Internet, comptes ni serveis externs. Base Room en l’emmagatzematge privat de l’app, sense xifrat propi. `allowBackup=false` i les regles XML exclouen les dades del backup automàtic i de la transferència Android entre dispositius. Cal verificar estes regles en dispositius reals abans d’una versió estable. Referència: [documentació oficial de backup](https://developer.android.com/identity/data/autobackup). Encara no hi ha exportació: desinstal·lar l’app elimina els moviments.
 
 ## Tecnologia prevista
 
-Kotlin, Jetpack Compose i Room. Versions, identificador de paquet i Android mínim pendents de decidir quan s’inicialitze el projecte.
+Kotlin 2.1.20, Compose BOM 2025.04.01, Room 2.7.1, AGP 8.9.2 i Gradle 8.11.1. Paquet inicial: `org.cabas.app` (no implica titularitat del domini). Android mínim: API 26; compile/target: API 35. La UI observa Room mitjançant Flow i ViewModel. Sense migracions destructives; es versiona l’esquema de Room.
 
 ## Imports i dates
 
-Els imports s’hauran de representar de manera exacta, evitant coma flotant binària. Abans de definir l’esquema caldrà decidir moneda, escala decimal, arredoniment i tractament de dates. L’euro del logo no fixa per si mateix les monedes admeses.
+La primera versió admet EUR. Cada moviment guarda un enter Long en cèntims, amb màxim de 99.999.999.999 cèntims. La conversió utilitza BigDecimal, rebutja zero, negatius i més de dos decimals. Les dates es guarden com a dia civil (epochDay), sense conversions de zona horària. Els intervals mensuals inclouen el primer dia i exclouen el primer dia del mes següent.
 
 ## Llengua i accessibilitat
 

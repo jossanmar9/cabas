@@ -1,0 +1,35 @@
+<resources>
+    <string name="app_name">Cabàs</string>
+    <string name="tagline">Els teus diners, sota control.</string>
+    <string name="local_only">Les dades es guarden només en este dispositiu.</string>
+    <string name="income">Ingressos</string>
+    <string name="expense">Despeses</string>
+    <string name="balance">Balanç del mes</string>
+    <string name="movements">Moviments</string>
+    <string name="empty_title">Comença a omplir el teu cabàs</string>
+    <string name="empty_body">Encara no hi ha moviments en este mes. Afig un ingrés o una despesa per començar.</string>
+    <string name="add">Afegir moviment</string>
+    <string name="save">Guardar</string>
+    <string name="saving">Guardant…</string>
+    <string name="cancel">Cancel·lar</string>
+    <string name="amount">Import en euros</string>
+    <string name="note">Concepte (opcional)</string>
+    <string name="date">Data (AAAA-MM-DD)</string>
+    <string name="category">Categoria</string>
+    <string name="needs">Necessitats</string>
+    <string name="wants">Desitjos</string>
+    <string name="culture">Cultura</string>
+    <string name="unexpected">Imprevistos</string>
+    <string name="previous">Mes anterior</string>
+    <string name="next">Mes següent</string>
+    <string name="delete">Eliminar</string>
+    <string name="delete_title">Eliminar este moviment?</string>
+    <string name="delete_body">Esta acció no es pot desfer.</string>
+    <string name="invalid_amount">Introdueix un import positiu amb un màxim de dos decimals (fins a 999.999.999,99 €), sense separadors de milers.</string>
+    <string name="invalid_date">Revisa la data. Utilitza el format AAAA-MM-DD.</string>
+    <string name="note_too_long">El concepte pot tindre fins a 120 caràcters.</string>
+    <string name="storage_error">No s’han pogut guardar els canvis. Torna-ho a intentar.</string>
+    <string name="load_error">No s’han pogut carregar els moviments.</string>
+    <string name="retry">Torna-ho a intentar</string>
+    <string name="loading">Carregant…</string>
+</resources>
