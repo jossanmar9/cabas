@@ -18,9 +18,15 @@ Les fases indiquen prioritats, no dates de lliurament.
 ## Primera versió útil · v0.1.0 prevista
 
 - [x] Registre manual d’ingressos i despeses.
-- [x] Categories i consulta mensual de moviments.
+- [x] Categories incloses i personalitzades, reanomenament, arxiu i consulta mensual de moviments.
 - [x] Pressupost, objectiu d’estalvi i resum mensual.
 - [x] Persistència local i proves de càlculs, plans i migració de dades.
+
+## Navegació i preferències
+
+- [x] Menú amb categories, ajuda, privacitat i informació de l’app.
+- [x] Tema clar, fosc o del sistema amb persistència local.
+- [x] Versió de l’app i enllaços a llicència i codi font.
 
 ## Revisió i control de les dades
 

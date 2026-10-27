@@ -8,7 +8,7 @@ Cabàs és un projecte d’app Android lliure i gratuïta de finances personals,
 
 ## Estat
 
-Primera base Android en desenvolupament (`0.1.0-dev.2`). Inclou registre manual d’ingressos i despeses, categories Kakebo, consulta per mesos, balanç mensual, pressupost de despeses i objectiu d’estalvi independents per mes, i eliminació amb confirmació. Els moviments es guarden en una base de dades Room local. Encara no és una versió publicada; la reflexió mensual, l’exportació i les còpies de seguretat estan pendents.
+Primera base Android en desenvolupament (`0.1.0-dev.3`). Inclou registre manual d’ingressos i despeses, categories Kakebo, consulta per mesos, balanç mensual, pressupost de despeses i objectiu d’estalvi independents per mes, categories editables, menú, informació de l’app i preferència d’aspecte. Els moviments es guarden en una base de dades Room local. Encara no és una versió publicada; la reflexió mensual, l’exportació i les còpies de seguretat estan pendents.
 
 ## Principis
 
@@ -26,6 +26,14 @@ Primera base Android en desenvolupament (`0.1.0-dev.2`). Inclou registre manual 
 - Resum i reflexió de final de mes.
 - Exportació, importació i còpies de seguretat locals controlades per l’usuari.
 
+## Categories i menú
+
+En **Menú → Categories**, crea categories de despesa i reanomena tant les personalitzades com les quatre incloses. Els noms admeten fins a 40 caràcters i no es poden repetir, tampoc si la categoria està arxivada.
+
+Arxivar una categoria l’amaga de les noves despeses i conserva la relació amb els moviments antics. Activa **Mostrar categories arxivades** per restaurar-la. Reanomenar-la actualitza el nom que es mostra també en l’historial. Si no queda cap categoria activa, cal crear-ne o restaurar-ne una abans de registrar una despesa.
+
+El menú inclou també **Aspecte** (sistema, clar o fosc, conservat localment), **Com funciona**, **Privacitat i dades** i **Quant a Cabàs**, amb la versió real de la compilació, llicència i enllaç al codi font. Els enllaços s’obrin al navegador a petició de l’usuari; l’app continua sense permís d’Internet.
+
 ## Pla mensual
 
 En cada mes, prem **Planificar mes** per definir un pressupost de despeses i un objectiu d’estalvi. Després pots modificar-los amb **Editar pla**.
@@ -37,7 +45,7 @@ En cada mes, prem **Planificar mes** per definir un pressupost de despeses i un 
 
 ### Provar l’actualització
 
-Instal·la la nova APK damunt de l’anterior, **sense desinstal·lar l’app ni esborrar-ne les dades**. Manté el paquet i la clau de desenvolupament i incrementa el codi de versió. La migració a Room v2 afig la taula dels plans sense modificar els moviments.
+Instal·la la nova APK damunt de l’anterior, **sense desinstal·lar l’app ni esborrar-ne les dades**. Manté el paquet i la clau de desenvolupament i incrementa el codi de versió. Les migracions Room v1 → v2 → v3 conserven els moviments i plans existents. La v3 vincula les quatre categories antigues a categories editables i afig una taula amb identificadors estables.
 
 Amb un ingrés de 1.000 € i una despesa de 25,50 €, un pressupost de 500 € mostrarà 474,50 € disponibles per gastar, i un objectiu de 1.000 € mostrarà que falten 25,50 €. Canvia de mes per comprovar que el pla és independent i torna a obrir l’app per verificar que es conserva.
 
@@ -62,7 +70,7 @@ Obri el directori en Android Studio o utilitza JDK 17 (JDK 21 també és compati
 
 APK de desenvolupament: `app/build/outputs/apk/debug/app-debug.apk`. Per instal·lar-lo: `adb install -r app/build/outputs/apk/debug/app-debug.apk`.
 
-Les proves locals cobreixen imports, dates, balanços, pressupostos i objectius. Amb Robolectric s’executen la migració Room v1 → v2 conservant moviments, la persistència dels plans, l’edició, l’eliminació del pla i l’aïllament entre mesos. La prova instrumentada addicional cobreix persistència dels moviments després de reobrir la base de dades, límits mensuals i eliminació. El workflow de GitHub executa compilació, proves unitàries i lint; les proves instrumentades requereixen un dispositiu.
+Les proves locals cobreixen imports, dates, balanços, pressupostos i objectius. Amb Robolectric s’executen les migracions Room v1 → v3 i v2 → v3 conservant moviments i plans, la persistència dels plans, l’aïllament entre mesos, les categories i les seues relacions. També hi ha una prova del menú, les pantalles d’informació i el canvi de tema. El formulari de categories cal verificar-lo manualment al dispositiu: l’animació del cursor impedix estabilitzar eixa prova en Robolectric. La prova instrumentada addicional cobreix persistència dels moviments després de reobrir la base de dades, límits mensuals i eliminació. El workflow de GitHub executa compilació, proves unitàries i lint; les proves instrumentades requereixen un dispositiu.
 
 **Dades:** la primera versió utilitza EUR, amb imports positius de fins a 999.999.999,99 € i dos decimals. Accepta coma o punt decimal, sense separadors de milers. L’app no demana permís d’Internet i desactiva les còpies de seguretat automàtiques d’Android. Encara no disposa d’exportació ni xifrat propi: desinstal·lar-la elimina les dades. No l’utilitzes encara com a únic registre dels teus comptes.
 

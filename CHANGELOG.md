@@ -4,6 +4,18 @@ Encara no hi ha cap versió publicada.
 
 ## Sense publicar
 
+### Actualització 0.1.0-dev.3
+
+- Categories de despesa personalitzades i reanomenament de les incloses.
+- Arxiu i restauració de categories sense eliminar l’historial; noms únics normalitzats.
+- Selector de categories actives en registrar una despesa.
+- Menú amb resum, categories, aspecte, ajuda, privacitat i informació de l’app.
+- Tema del sistema, clar o fosc, amb preferència local.
+- Versió i codi de compilació reals, llicència i enllaços al repositori.
+- Migració Room v2 → v3 que conserva moviments, categories anteriors i plans.
+- Proves de categories, integritat referencial, migracions i flux d’interfície.
+
+
 ### Actualització 0.1.0-dev.2
 
 - Pressupost de despeses i objectiu d’estalvi per mes, editables i opcionals.

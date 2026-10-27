@@ -2,6 +2,9 @@ package org.cabas.app
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.core.view.WindowCompat
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Image
@@ -26,6 +29,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import org.cabas.app.data.Movement
 import org.cabas.app.data.MonthlyPlan
+import org.cabas.app.data.ExpenseCategory
 import org.cabas.app.domain.*
 import java.time.LocalDate
 import java.time.YearMonth
@@ -45,11 +49,20 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            MaterialTheme(colorScheme = lightColorScheme(
+            val model: CabasViewModel = viewModel()
+            val theme by model.themeMode.collectAsStateWithLifecycle()
+            val dark = when (theme) { ThemeMode.SYSTEM -> isSystemInDarkTheme(); ThemeMode.LIGHT -> false; ThemeMode.DARK -> true }
+            SideEffect {
+                WindowCompat.getInsetsController(window, window.decorView).apply {
+                    isAppearanceLightStatusBars = !dark
+                    isAppearanceLightNavigationBars = !dark
+                }
+            }
+            MaterialTheme(colorScheme = if (dark) darkColorScheme(primary = Color(0xFF9AD5B4)) else lightColorScheme(
                 primary = Color(0xFF246A52), onPrimary = Color.White,
                 secondary = Color(0xFF865219), background = Color(0xFFFFFBF4),
                 surface = Color(0xFFFFFBF4), surfaceVariant = Color(0xFFF0EBDD),
-            )) { CabasScreen() }
+            )) { CabasScreen(model) }
         }
     }
 }
@@ -60,6 +73,10 @@ private fun CabasScreen(model: CabasViewModel = viewModel()) {
     val state by model.state.collectAsStateWithLifecycle()
     val saving by model.saving.collectAsStateWithLifecycle()
     val error by model.error.collectAsStateWithLifecycle()
+    var page by rememberSaveable { mutableStateOf("home") }
+    var menu by remember { mutableStateOf(false) }
+    val theme by model.themeMode.collectAsStateWithLifecycle()
+    BackHandler(enabled = page != "home") { page = "home"; model.clearError() }
     var adding by rememberSaveable { mutableStateOf(false) }
     var planningMonth by rememberSaveable { mutableStateOf<String?>(null) }
     var planBudget by rememberSaveable { mutableStateOf("") }
@@ -67,16 +84,36 @@ private fun CabasScreen(model: CabasViewModel = viewModel()) {
     var deleting by remember { mutableStateOf<Movement?>(null) }
     val snack = remember { SnackbarHostState() }
     val message = error?.let { stringResource(it) }
-    LaunchedEffect(message, adding, deleting, planningMonth) {
-        if (message != null && !adding && deleting == null && planningMonth == null) { snack.showSnackbar(message); model.clearError() }
+    LaunchedEffect(message, adding, deleting, planningMonth, page) {
+        if (message != null && !adding && deleting == null && planningMonth == null && page != "categories") { snack.showSnackbar(message); model.clearError() }
     }
     Scaffold(
+        topBar = {
+            Surface {
+                Row(Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                    if (page != "home") TextButton(onClick = { page = "home"; model.clearError() }) { Text(stringResource(R.string.back)) }
+                    Text(stringResource(pageTitle(page)), Modifier.weight(1f), style = MaterialTheme.typography.titleLarge)
+                    Box {
+                        TextButton(onClick = { menu = true }) { Text(stringResource(R.string.menu)) }
+                        DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+                            listOf("home", "categories", "appearance", "help", "privacy", "about").forEach { target ->
+                                DropdownMenuItem(text = { Text(stringResource(pageTitle(target))) }, onClick = { menu = false; model.clearError(); page = target })
+                            }
+                        }
+                    }
+                }
+            }
+        },
         snackbarHost = { SnackbarHost(snack) },
         floatingActionButton = {
-            ExtendedFloatingActionButton(onClick = { model.clearError(); adding = true }) { Text(stringResource(R.string.add)) }
+            if (page == "home") ExtendedFloatingActionButton(onClick = { model.clearError(); adding = true }) { Text(stringResource(R.string.add)) }
         },
     ) { padding ->
-        LazyColumn(
+        when (page) {
+            "categories" -> CategoriesContent(state.categories, state.loading, state.failed, saving, message, Modifier.padding(padding), model::retry, model::clearError, model::saveCategory, model::archiveCategory)
+            "appearance" -> AppearanceContent(theme, model::setTheme, Modifier.padding(padding))
+            "help", "privacy", "about" -> InfoContent(page, Modifier.padding(padding))
+            else -> LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
             contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 104.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -132,10 +169,12 @@ private fun CabasScreen(model: CabasViewModel = viewModel()) {
                     items(state.items, key = { it.id }) { item ->
                         OutlinedCard(Modifier.fillMaxWidth()) {
                             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                Text(item.note.ifBlank { stringResource(if (item.kind == Kind.INCOME) R.string.income else item.category!!.label()) }, style = MaterialTheme.typography.titleMedium)
+                                val categoryName = state.categories.firstOrNull { it.id == item.categoryId }?.name
+                                    ?: item.category?.let { stringResource(it.label()) }
+                                Text(item.note.ifBlank { categoryName ?: stringResource(R.string.income) }, style = MaterialTheme.typography.titleMedium)
                                 Text((if (item.kind == Kind.EXPENSE) "−" else "+") + Money.format(item.cents), style = MaterialTheme.typography.titleLarge)
                                 Text(LocalDate.ofEpochDay(item.epochDay).format(DateTimeFormatter.ofPattern("dd/MM/yyyy")))
-                                item.category?.let { Text(stringResource(it.label())) }
+                                categoryName?.let { Text(it) }
                                 TextButton(enabled = !saving, onClick = { model.clearError(); deleting = item }) { Text(stringResource(R.string.delete)) }
                             }
                         }
@@ -144,8 +183,9 @@ private fun CabasScreen(model: CabasViewModel = viewModel()) {
             }
             item { Text(stringResource(R.string.local_only), style = MaterialTheme.typography.bodySmall) }
         }
+        }
     }
-    if (adding) MovementDialog(saving, message, { if (!saving) { adding = false; model.clearError() } }) { amount, date, note, kind, category ->
+    if (adding) MovementDialog(state.categories.filter { !it.archived }, saving, message, { if (!saving) { adding = false; model.clearError() } }) { amount, date, note, kind, category ->
         model.add(amount, date, note, kind, category) { adding = false }
     }
     planningMonth?.let { selected ->
@@ -174,12 +214,14 @@ private fun SummaryLine(label: Int, cents: Long) {
 }
 
 @Composable
-private fun MovementDialog(saving: Boolean, error: String?, dismiss: () -> Unit, save: (String, String, String, Kind, Category) -> Unit) {
+private fun MovementDialog(categories: List<ExpenseCategory>, saving: Boolean, error: String?, dismiss: () -> Unit, save: (String, String, String, Kind, Long?) -> Unit) {
     var amount by rememberSaveable { mutableStateOf("") }
     var date by rememberSaveable { mutableStateOf(LocalDate.now().toString()) }
     var note by rememberSaveable { mutableStateOf("") }
     var kind by rememberSaveable { mutableStateOf(Kind.EXPENSE) }
-    var category by rememberSaveable { mutableStateOf(Category.NEEDS) }
+    var categoryId by rememberSaveable { mutableStateOf<Long?>(null) }
+    var categoryMenu by remember { mutableStateOf(false) }
+    val selectedCategory = categories.firstOrNull { it.id == categoryId } ?: categories.firstOrNull { it.id == 1L } ?: categories.firstOrNull()
     AlertDialog(
         onDismissRequest = dismiss,
         title = { Text(stringResource(R.string.add)) },
@@ -194,14 +236,20 @@ private fun MovementDialog(saving: Boolean, error: String?, dismiss: () -> Unit,
                 OutlinedTextField(note, { note = it }, enabled = !saving, label = { Text(stringResource(R.string.note)) }, singleLine = true)
                 if (kind == Kind.EXPENSE) {
                     Text(stringResource(R.string.category))
-                    Category.entries.forEach { option ->
-                        FilterChip(selected = category == option, enabled = !saving, onClick = { category = option }, label = { Text(stringResource(option.label())) })
+                    if (categories.isEmpty()) Text(stringResource(R.string.no_active_categories))
+                    else Box {
+                        OutlinedButton(enabled = !saving, onClick = { categoryMenu = true }) { Text(selectedCategory?.name.orEmpty()) }
+                        DropdownMenu(expanded = categoryMenu, onDismissRequest = { categoryMenu = false }) {
+                            categories.forEach { option ->
+                                DropdownMenuItem(text = { Text(option.name) }, onClick = { categoryId = option.id; categoryMenu = false })
+                            }
+                        }
                     }
                 }
                 error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
             }
         },
-        confirmButton = { TextButton(enabled = !saving, onClick = { save(amount, date, note, kind, category) }) { Text(stringResource(if (saving) R.string.saving else R.string.save)) } },
+        confirmButton = { TextButton(enabled = !saving, onClick = { save(amount, date, note, kind, selectedCategory?.id) }) { Text(stringResource(if (saving) R.string.saving else R.string.save)) } },
         dismissButton = { TextButton(enabled = !saving, onClick = dismiss) { Text(stringResource(R.string.cancel)) } },
     )
 }

@@ -19,8 +19,7 @@ import java.time.LocalDate
 @Config(sdk = [28])
 class MonthlyPlanDatabaseTest {
     private val context: Context get() = ApplicationProvider.getApplicationContext()
-    private fun open(name: String) = Room.databaseBuilder(context, CabasDatabase::class.java, name)
-        .addMigrations(CabasDatabase.MIGRATION_1_2).build()
+    private fun open(name: String) = CabasDatabase.builder(context, name).build()
 
     @Test fun upgradesV1RetainsMovementsAndPersistsIndependentMonthlyPlans() = runBlocking {
         val name = "migration-plan-test.db"
@@ -45,7 +44,7 @@ class MonthlyPlanDatabaseTest {
         }
         var db = open(name)
         try {
-            // Opening with Room runs the migration and validates the entire v2 schema.
+            // Opening with Room runs the migration and validates the entire latest schema.
             val original = db.movements().observeMonth(start, start + 31).first().single()
             assertEquals(7L, original.id)
             assertEquals(1234L, original.cents)

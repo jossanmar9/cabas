@@ -20,7 +20,7 @@ class MovementDaoTest {
         context.deleteDatabase(name)
         val start = LocalDate.of(2026, 10, 1).toEpochDay()
         val end = LocalDate.of(2026, 11, 1).toEpochDay()
-        fun open() = Room.databaseBuilder(context, CabasDatabase::class.java, name).build()
+        fun open() = CabasDatabase.builder(context, name).build()
         var db = open()
         try {
             db.movements().insert(Movement(cents = 1234, kind = Kind.EXPENSE, category = Category.NEEDS, epochDay = start, note = "Mercat"))

@@ -24,6 +24,18 @@ El pressupost restant és el pressupost menys les despeses; un resultat negatiu 
 
 La migració explícita v1 → v2 només crea la nova taula. No elimina ni modifica `movements`. La prova amb Robolectric recrea l’esquema v1 versionat, inserix un moviment, obri Room v2 amb validació d’esquema i comprova la conservació de les dades i la persistència dels plans després de reobrir.
 
+## Categories editables i migració v3
+
+`expense_categories` guarda identificadors estables, nom visible, clau normalitzada única, origen inclòs/personalitzat i estat d’arxiu. La clau es calcula amb normalització Unicode NFC, espais reduïts i minúscules independents de la configuració regional. El límit és de 40 unitats de text Kotlin; no s’admeten noms buits, caràcters de control o de format invisibles.
+
+`movements.categoryId` té una clau forana amb eliminació restringida. La columna enum antiga es conserva per compatibilitat, però els moviments nous utilitzen l’identificador editable. No s’oferix eliminació definitiva de categories: l’arxiu conserva les referències i permet restaurar-les. El nom es resol al llegir, de manera que un canvi de nom es veu també en els moviments antics.
+
+La migració v2 → v3 crea les quatre categories inicials i assigna cada despesa antiga a l’identificador corresponent; els ingressos mantenen categoria nul·la. No altera imports, dates, conceptes ni plans mensuals. Les instal·lacions noves reben les mateixes categories inicials mitjançant el callback de Room.
+
+## Preferències i informació
+
+L’aspecte es guarda en SharedPreferences, amb el sistema com a valor inicial. La UI actualitza també el contrast de les barres del sistema. La versió es llig de BuildConfig per evitar text desactualitzat. Els enllaços de llicència i codi font s’obrin explícitament en un navegador extern i gestionen l’absència d’un navegador.
+
 ## Llengua i accessibilitat
 
 Valencià com a llengua principal, amb textos en recursos traduïbles. Caldrà considerar lector de pantalla, contrast, grandària del text i controls accessibles.
