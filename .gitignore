@@ -1,0 +1,32 @@
+# Android i Gradle
+.gradle/
+.kotlin/
+**/build/
+local.properties
+.externalNativeBuild/
+.cxx/
+captures/
+*.apk
+*.aab
+*.ap_
+*.dex
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Claus i configuració privada
+*.jks
+*.keystore
+keystore.properties
+.env
+.env.*
+!.env.example
+
+# Sistema
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
