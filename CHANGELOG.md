@@ -4,6 +4,15 @@ Encara no hi ha cap versió publicada.
 
 ## Sense publicar
 
+### Actualització 0.1.0-dev.2
+
+- Pressupost de despeses i objectiu d’estalvi per mes, editables i opcionals.
+- Indicadors del pressupost restant, excés de despesa i progrés cap a l’objectiu.
+- Imports zero explícits i camps buits per llevar límits o objectius.
+- Migració Room v1 → v2 que conserva els moviments existents.
+- Proves locals de migració i persistència amb Robolectric, i proves dels càlculs del pla.
+- Codi de versió Android incrementat per instal·lar damunt de l’APK inicial.
+
 ### Afegit
 
 - Base Android amb Kotlin, Compose, Room i Gradle Wrapper verificat amb SHA-256.

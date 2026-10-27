@@ -25,8 +25,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import org.cabas.app.data.Movement
+import org.cabas.app.data.MonthlyPlan
 import org.cabas.app.domain.*
 import java.time.LocalDate
+import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
@@ -59,11 +61,14 @@ private fun CabasScreen(model: CabasViewModel = viewModel()) {
     val saving by model.saving.collectAsStateWithLifecycle()
     val error by model.error.collectAsStateWithLifecycle()
     var adding by rememberSaveable { mutableStateOf(false) }
+    var planningMonth by rememberSaveable { mutableStateOf<String?>(null) }
+    var planBudget by rememberSaveable { mutableStateOf("") }
+    var planGoal by rememberSaveable { mutableStateOf("") }
     var deleting by remember { mutableStateOf<Movement?>(null) }
     val snack = remember { SnackbarHostState() }
     val message = error?.let { stringResource(it) }
-    LaunchedEffect(message, adding, deleting) {
-        if (message != null && !adding && deleting == null) { snack.showSnackbar(message); model.clearError() }
+    LaunchedEffect(message, adding, deleting, planningMonth) {
+        if (message != null && !adding && deleting == null && planningMonth == null) { snack.showSnackbar(message); model.clearError() }
     }
     Scaffold(
         snackbarHost = { SnackbarHost(snack) },
@@ -92,7 +97,7 @@ private fun CabasScreen(model: CabasViewModel = viewModel()) {
                 }
             }
             when {
-                state.loading -> item { Text(stringResource(R.string.loading)) }
+                (state.loading || (!state.failed && state.selectedMonth != month)) -> item { Text(stringResource(R.string.loading)) }
                 state.failed -> item {
                     Text(stringResource(R.string.load_error))
                     Button(onClick = model::retry) { Text(stringResource(R.string.retry)) }
@@ -107,6 +112,14 @@ private fun CabasScreen(model: CabasViewModel = viewModel()) {
                                 SummaryLine(R.string.income, summary.income)
                                 SummaryLine(R.string.expense, summary.expense)
                             }
+                        }
+                    }
+                    item {
+                        PlanCard(state.plan, summary, !saving) {
+                            model.clearError()
+                            planBudget = editableAmount(state.plan?.budgetCents)
+                            planGoal = editableAmount(state.plan?.savingsGoalCents)
+                            planningMonth = month.toString()
                         }
                     }
                     item { Text(stringResource(R.string.movements), style = MaterialTheme.typography.titleLarge) }
@@ -134,6 +147,13 @@ private fun CabasScreen(model: CabasViewModel = viewModel()) {
     }
     if (adding) MovementDialog(saving, message, { if (!saving) { adding = false; model.clearError() } }) { amount, date, note, kind, category ->
         model.add(amount, date, note, kind, category) { adding = false }
+    }
+    planningMonth?.let { selected ->
+        PlanDialog(selected, planBudget, planGoal, saving, message,
+            { planBudget = it }, { planGoal = it },
+            { if (!saving) { planningMonth = null; model.clearError() } },
+            { model.savePlan(selected, planBudget, planGoal) { planningMonth = null } },
+        )
     }
     deleting?.let { item ->
         AlertDialog(
@@ -182,6 +202,58 @@ private fun MovementDialog(saving: Boolean, error: String?, dismiss: () -> Unit,
             }
         },
         confirmButton = { TextButton(enabled = !saving, onClick = { save(amount, date, note, kind, category) }) { Text(stringResource(if (saving) R.string.saving else R.string.save)) } },
+        dismissButton = { TextButton(enabled = !saving, onClick = dismiss) { Text(stringResource(R.string.cancel)) } },
+    )
+}
+
+@Composable
+private fun PlanCard(plan: MonthlyPlan?, totals: Totals, enabled: Boolean, edit: () -> Unit) {
+    val progress = PlanProgress(totals, Targets(plan?.budgetCents, plan?.savingsGoalCents))
+    OutlinedCard(Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(stringResource(R.string.monthly_plan), style = MaterialTheme.typography.titleLarge)
+            Text(stringResource(R.string.budget), style = MaterialTheme.typography.titleMedium)
+            if (plan?.budgetCents == null) Text(stringResource(R.string.not_set))
+            else {
+                Text(Money.format(plan.budgetCents))
+                LinearProgressIndicator(progress = { progress.budgetFraction }, modifier = Modifier.fillMaxWidth())
+                val remaining = progress.budgetRemaining!!
+                Text(
+                    stringResource(if (remaining < 0) R.string.budget_exceeded else R.string.budget_remaining, Money.format(if (remaining < 0) -remaining else remaining)),
+                    color = if (remaining < 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
+                )
+            }
+            HorizontalDivider()
+            Text(stringResource(R.string.savings_goal), style = MaterialTheme.typography.titleMedium)
+            if (plan?.savingsGoalCents == null) Text(stringResource(R.string.not_set))
+            else {
+                Text(Money.format(plan.savingsGoalCents))
+                LinearProgressIndicator(progress = { progress.savingsFraction }, modifier = Modifier.fillMaxWidth())
+                Text(if (progress.goalReached) stringResource(R.string.goal_reached)
+                    else stringResource(R.string.savings_remaining, Money.format(progress.savingsRemaining!!)))
+            }
+            Text(stringResource(R.string.savings_explanation), style = MaterialTheme.typography.bodySmall)
+            TextButton(enabled = enabled, onClick = edit) { Text(stringResource(if (plan == null) R.string.plan_month else R.string.edit_plan)) }
+        }
+    }
+}
+
+@Composable
+private fun PlanDialog(month: String, budget: String, goal: String, saving: Boolean, error: String?,
+    changeBudget: (String) -> Unit, changeGoal: (String) -> Unit, dismiss: () -> Unit, save: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = dismiss,
+        title = { Column { Text(stringResource(R.string.monthly_plan)); Text(YearMonth.parse(month).format(DateTimeFormatter.ofPattern("LLLL yyyy", Valencian)), style = MaterialTheme.typography.titleMedium) } },
+        text = {
+            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(stringResource(R.string.plan_help))
+                OutlinedTextField(budget, changeBudget, enabled = !saving, label = { Text(stringResource(R.string.budget_input)) }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal))
+                OutlinedTextField(goal, changeGoal, enabled = !saving, label = { Text(stringResource(R.string.goal_input)) }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal))
+                error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+            }
+        },
+        confirmButton = { TextButton(enabled = !saving, onClick = save) { Text(stringResource(if (saving) R.string.saving else R.string.save)) } },
         dismissButton = { TextButton(enabled = !saving, onClick = dismiss) { Text(stringResource(R.string.cancel)) } },
     )
 }

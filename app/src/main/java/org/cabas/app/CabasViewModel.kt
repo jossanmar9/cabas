@@ -11,16 +11,20 @@ import org.cabas.app.data.*
 import org.cabas.app.domain.*
 import java.time.YearMonth
 
-data class MonthState(val items: List<Movement> = emptyList(), val loading: Boolean = true, val failed: Boolean = false)
+data class MonthState(val items: List<Movement> = emptyList(), val plan: MonthlyPlan? = null, val selectedMonth: YearMonth? = null, val loading: Boolean = true, val failed: Boolean = false)
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class CabasViewModel(application: Application) : AndroidViewModel(application) {
-    private val dao = CabasDatabase.get(application).movements()
+    private val database = CabasDatabase.get(application)
+    private val dao = database.movements()
+    private val plans = database.plans()
     val month = MutableStateFlow(YearMonth.now())
     private val reload = MutableStateFlow(0)
     val state = combine(month, reload) { month, _ -> month }.flatMapLatest { selected ->
-        dao.observeMonth(selected.atDay(1).toEpochDay(), selected.plusMonths(1).atDay(1).toEpochDay())
-            .map { MonthState(items = it, loading = false) }
+        combine(
+            dao.observeMonth(selected.atDay(1).toEpochDay(), selected.plusMonths(1).atDay(1).toEpochDay()),
+            plans.observe(selected.toString()),
+        ) { items, plan -> MonthState(items = items, plan = plan, selectedMonth = selected, loading = false) }
             .onStart { emit(MonthState()) }
             .catch { emit(MonthState(loading = false, failed = true)) }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), MonthState())
@@ -45,6 +49,16 @@ class CabasViewModel(application: Application) : AndroidViewModel(application) {
     fun delete(item: Movement, done: () -> Unit) {
         if (_saving.value) return
         write { dao.delete(item.id); done() }
+    }
+    fun savePlan(selectedMonth: String, budget: String, goal: String, done: () -> Unit) {
+        if (_saving.value) return
+        val targets = parseTargets(budget, goal) ?: return fail(R.string.invalid_plan_amount)
+        val key = runCatching { YearMonth.parse(selectedMonth).toString() }.getOrNull() ?: return fail(R.string.invalid_date)
+        write {
+            if (targets.budgetCents == null && targets.savingsGoalCents == null) plans.clear(key)
+            else plans.save(MonthlyPlan(key, targets.budgetCents, targets.savingsGoalCents))
+            done()
+        }
     }
     private fun fail(message: Int) { _error.value = message }
     private fun write(block: suspend () -> Unit) {

@@ -32,4 +32,19 @@
     <string name="load_error">No s’han pogut carregar els moviments.</string>
     <string name="retry">Torna-ho a intentar</string>
     <string name="loading">Carregant…</string>
+    <string name="monthly_plan">Pla del mes</string>
+    <string name="plan_month">Planificar mes</string>
+    <string name="edit_plan">Editar pla</string>
+    <string name="budget">Pressupost de despeses</string>
+    <string name="savings_goal">Objectiu d’estalvi</string>
+    <string name="budget_input">Pressupost de despeses (€)</string>
+    <string name="goal_input">Objectiu d’estalvi (€)</string>
+    <string name="not_set">Sense definir</string>
+    <string name="budget_remaining">Et queden per gastar: %1$s</string>
+    <string name="budget_exceeded">Has superat el pressupost en %1$s</string>
+    <string name="savings_remaining">Per arribar a l’objectiu et falten %1$s</string>
+    <string name="goal_reached">Objectiu assolit amb els moviments registrats</string>
+    <string name="savings_explanation">L’estalvi és el balanç dels ingressos menys les despeses registrats. Pot canviar durant el mes.</string>
+    <string name="plan_help">Definix els imports per a este mes. Deixa un camp buit per llevar el límit o l’objectiu; zero és un import vàlid. No es creen moviments ni es transfereixen diners.</string>
+    <string name="invalid_plan_amount">Utilitza zero o un import positiu amb fins a dos decimals (màxim 999.999.999,99 €), sense separadors de milers. També pots deixar el camp buit.</string>
 </resources>

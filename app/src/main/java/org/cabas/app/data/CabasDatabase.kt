@@ -2,6 +2,8 @@ package org.cabas.app.data
 
 import android.content.Context
 import androidx.room.*
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import kotlinx.coroutines.flow.Flow
 import org.cabas.app.domain.Category
 import org.cabas.app.domain.Kind
@@ -24,14 +26,35 @@ interface MovementDao {
     @Query("DELETE FROM movements WHERE id = :id") suspend fun delete(id: Long)
 }
 
-@Database(entities = [Movement::class], version = 1, exportSchema = true)
+@Entity(tableName = "monthly_plans")
+data class MonthlyPlan(
+    @PrimaryKey val month: String,
+    val budgetCents: Long?,
+    val savingsGoalCents: Long?,
+)
+
+@Dao
+interface MonthlyPlanDao {
+    @Query("SELECT * FROM monthly_plans WHERE month = :month")
+    fun observe(month: String): Flow<MonthlyPlan?>
+    @Upsert suspend fun save(plan: MonthlyPlan)
+    @Query("DELETE FROM monthly_plans WHERE month = :month") suspend fun clear(month: String)
+}
+
+@Database(entities = [Movement::class, MonthlyPlan::class], version = 2, exportSchema = true)
 abstract class CabasDatabase : RoomDatabase() {
     abstract fun movements(): MovementDao
+    abstract fun plans(): MonthlyPlanDao
     companion object {
+        val MIGRATION_1_2 = object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("CREATE TABLE IF NOT EXISTS `monthly_plans` (`month` TEXT NOT NULL, `budgetCents` INTEGER, `savingsGoalCents` INTEGER, PRIMARY KEY(`month`))")
+            }
+        }
         @Volatile private var instance: CabasDatabase? = null
         fun get(context: Context): CabasDatabase = instance ?: synchronized(this) {
             instance ?: Room.databaseBuilder(context.applicationContext, CabasDatabase::class.java, "cabas.db")
-                .build().also { instance = it }
+                .addMigrations(MIGRATION_1_2).build().also { instance = it }
         }
     }
 }

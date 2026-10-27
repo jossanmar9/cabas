@@ -8,7 +8,7 @@ Cabàs és un projecte d’app Android lliure i gratuïta de finances personals,
 
 ## Estat
 
-Primera base Android en desenvolupament (`0.1.0-dev`). Inclou registre manual d’ingressos i despeses, categories Kakebo, consulta per mesos, balanç mensual i eliminació amb confirmació. Els moviments es guarden en una base de dades Room local. Encara no és una versió publicada; pressupostos, objectius d’estalvi i exportació estan pendents.
+Primera base Android en desenvolupament (`0.1.0-dev.2`). Inclou registre manual d’ingressos i despeses, categories Kakebo, consulta per mesos, balanç mensual, pressupost de despeses i objectiu d’estalvi independents per mes, i eliminació amb confirmació. Els moviments es guarden en una base de dades Room local. Encara no és una versió publicada; la reflexió mensual, l’exportació i les còpies de seguretat estan pendents.
 
 ## Principis
 
@@ -26,7 +26,22 @@ Primera base Android en desenvolupament (`0.1.0-dev`). Inclou registre manual d�
 - Resum i reflexió de final de mes.
 - Exportació, importació i còpies de seguretat locals controlades per l’usuari.
 
-## Tecnologia prevista
+## Pla mensual
+
+En cada mes, prem **Planificar mes** per definir un pressupost de despeses i un objectiu d’estalvi. Després pots modificar-los amb **Editar pla**.
+
+- El pressupost mostra el que queda per gastar o quant s’ha superat.
+- L’objectiu es compara amb els ingressos menys les despeses registrats d’eixe mes. No representa diners apartats ni un saldo bancari.
+- Els camps són independents: buit significa sense definir; zero és un límit o objectiu explícit. Per llevar el pla, deixa els dos camps buits i guarda.
+- Els plans no es copien automàticament a altres mesos i no creen moviments.
+
+### Provar l’actualització
+
+Instal·la la nova APK damunt de l’anterior, **sense desinstal·lar l’app ni esborrar-ne les dades**. Manté el paquet i la clau de desenvolupament i incrementa el codi de versió. La migració a Room v2 afig la taula dels plans sense modificar els moviments.
+
+Amb un ingrés de 1.000 € i una despesa de 25,50 €, un pressupost de 500 € mostrarà 474,50 € disponibles per gastar, i un objectiu de 1.000 € mostrarà que falten 25,50 €. Canvia de mes per comprovar que el pla és independent i torna a obrir l’app per verificar que es conserva.
+
+## Tecnologia
 
 Kotlin 2.1.20, Jetpack Compose (BOM 2025.04.01) i Room 2.7.1. Android 8.0 (API 26) o posterior, compilació i target API 35. AGP 8.9.2 i Gradle 8.11.1.
 
@@ -47,7 +62,7 @@ Obri el directori en Android Studio o utilitza JDK 17 (JDK 21 també és compati
 
 APK de desenvolupament: `app/build/outputs/apk/debug/app-debug.apk`. Per instal·lar-lo: `adb install -r app/build/outputs/apk/debug/app-debug.apk`.
 
-Les proves unitàries cobreixen imports, dates i balanços. La prova instrumentada cobreix persistència després de reobrir la base de dades, límits mensuals i eliminació. El workflow de GitHub executa compilació, proves unitàries i lint; les proves instrumentades requereixen un dispositiu.
+Les proves locals cobreixen imports, dates, balanços, pressupostos i objectius. Amb Robolectric s’executen la migració Room v1 → v2 conservant moviments, la persistència dels plans, l’edició, l’eliminació del pla i l’aïllament entre mesos. La prova instrumentada addicional cobreix persistència dels moviments després de reobrir la base de dades, límits mensuals i eliminació. El workflow de GitHub executa compilació, proves unitàries i lint; les proves instrumentades requereixen un dispositiu.
 
 **Dades:** la primera versió utilitza EUR, amb imports positius de fins a 999.999.999,99 € i dos decimals. Accepta coma o punt decimal, sense separadors de milers. L’app no demana permís d’Internet i desactiva les còpies de seguretat automàtiques d’Android. Encara no disposa d’exportació ni xifrat propi: desinstal·lar-la elimina les dades. No l’utilitzes encara com a únic registre dels teus comptes.
 

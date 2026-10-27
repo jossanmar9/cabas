@@ -10,13 +10,13 @@ import java.text.NumberFormat
 /** EUR only in this first version. Never use Float/Double for money. */
 object Money {
     const val MAX_CENTS = 99_999_999_999L
-    fun parse(text: String): Long? {
+    fun parse(text: String, allowZero: Boolean = false): Long? {
         val value = text.trim()
         if (!Regex("[0-9]{1,9}([.,][0-9]{1,2})?").matches(value)) return null
         return runCatching {
             BigDecimal(value.replace(',', '.')).movePointRight(2)
                 .setScale(0, RoundingMode.UNNECESSARY).longValueExact()
-        }.getOrNull()?.takeIf { it in 1..MAX_CENTS }
+        }.getOrNull()?.takeIf { it in (if (allowZero) 0L else 1L)..MAX_CENTS }
     }
     fun format(cents: Long): String = NumberFormat.getCurrencyInstance(Locale.forLanguageTag("ca-ES-valencia")).apply {
         currency = Currency.getInstance("EUR")
