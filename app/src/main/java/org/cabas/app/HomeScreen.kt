@@ -103,7 +103,7 @@ internal fun HomeContent(model: CabasViewModel, error: String?, modifier: Modifi
             onClick = { model.clearError(); adding = true },
             icon = { Icon(Icons.Default.Add, null) },
             text = { Text(stringResource(R.string.add)) },
-            modifier = Modifier.align(Alignment.BottomEnd).navigationBarsPadding().padding(16.dp),
+            modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
         )
     }
 

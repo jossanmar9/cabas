@@ -39,7 +39,12 @@ class AppNavigationTest {
         compose.onNodeWithText("Quant a Cabàs").performClick()
         compose.onNodeWithText("Versió " + BuildConfig.VERSION_NAME + " (" + BuildConfig.VERSION_CODE + ")").assertIsDisplayed()
         compose.onNodeWithContentDescription("Tornar").performClick()
-        compose.onNodeWithText("Afegir moviment").assertIsDisplayed()
+        compose.waitUntil(10_000) { compose.onAllNodesWithText("Comença a omplir el teu cabàs").fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithContentDescription("Mes següent").assertIsDisplayed()
+        compose.onNodeWithText("Despeses per categoria").assertDoesNotExist()
+        compose.onNodeWithText("Afegir moviment").performClick()
+        compose.onNodeWithText("Import en euros").assertExists()
+        compose.onNodeWithText("Cancel·lar").performClick()
+        compose.onNodeWithText("Import en euros").assertDoesNotExist()
     }
 }

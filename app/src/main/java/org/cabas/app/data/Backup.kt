@@ -165,7 +165,7 @@ object Backup {
 
 /** Movements as CSV for spreadsheets: semicolon separator, decimal comma and a BOM for Excel. */
 fun movementsCsv(movements: List<Movement>, categoryName: (Movement) -> String): String = buildString {
-    append('﻿')
+    append('\uFEFF')
     append("data;tipus;import;categoria;concepte\r\n")
     movements.forEach { m ->
         val amount = BigDecimal.valueOf(if (m.kind == Kind.EXPENSE) -m.cents else m.cents, 2).toPlainString().replace('.', ',')
