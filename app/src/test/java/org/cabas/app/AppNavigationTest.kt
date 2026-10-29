@@ -15,14 +15,19 @@ import org.robolectric.annotation.GraphicsMode
 class AppNavigationTest {
     @get:Rule val compose = createAndroidComposeRule<MainActivity>()
 
+    private fun waitForText(text: String) {
+        try { compose.waitUntil(10_000) { compose.onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty() } }
+        catch (e: Throwable) { throw AssertionError("'$text' not found. Screen: " + compose.onRoot(useUnmergedTree = true).printToString().replace("\n", " | "), e) }
+    }
+
     @Test fun opensCategoriesAppearanceHelpPrivacyAndActualVersion() {
         compose.onNodeWithContentDescription("Menú").performClick()
         compose.onNodeWithText("Categories").performClick()
-        compose.waitUntil(10_000) { compose.onAllNodesWithText("Necessitats").fetchSemanticsNodes().isNotEmpty() }
+        waitForText("Necessitats")
         compose.onNodeWithText("Nova categoria").assertIsEnabled()
         compose.onNodeWithContentDescription("Menú").performClick()
         compose.onNodeWithText("Moviments recurrents").performClick()
-        compose.waitUntil(10_000) { compose.onAllNodesWithText("Nou moviment recurrent").fetchSemanticsNodes().isNotEmpty() }
+        waitForText("Nou moviment recurrent")
         compose.onNodeWithText("Nou moviment recurrent").assertIsEnabled()
         compose.onNodeWithContentDescription("Menú").performClick()
         compose.onNodeWithText("Còpies i exportació").performClick()
@@ -45,7 +50,7 @@ class AppNavigationTest {
         compose.onNodeWithText("Quant a Cabàs").performClick()
         compose.onNodeWithText("Versió " + BuildConfig.VERSION_NAME + " (" + BuildConfig.VERSION_CODE + ")").assertIsDisplayed()
         compose.onNodeWithContentDescription("Tornar").performClick()
-        compose.waitUntil(10_000) { compose.onAllNodesWithText("Comença a omplir el teu cabàs").fetchSemanticsNodes().isNotEmpty() }
+        waitForText("Comença a omplir el teu cabàs")
         compose.onNodeWithContentDescription("Mes següent").assertIsDisplayed()
         compose.onNodeWithText("Despeses per categoria").assertDoesNotExist()
         // Dialog forms are verified on a device: the text cursor animation keeps Robolectric busy.

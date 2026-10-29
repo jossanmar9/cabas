@@ -91,7 +91,7 @@ class BackupTest {
         } finally { db.close(); context.deleteDatabase(name) }
     }
 
-    @Test fun importsFormatOneBackupsWithoutCategoryBudgets() = runBlocking {
+    @Test fun importsFormatOneBackupsWithoutCategoryBudgets() = runBlocking<Unit> {
         val name = "backup-format1.db"
         context.deleteDatabase(name)
         val db = open(name)
