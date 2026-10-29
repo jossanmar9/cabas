@@ -3,7 +3,6 @@ package org.cabas.app
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
@@ -228,7 +227,7 @@ private fun MovementRow(item: Movement, categories: List<ExpenseCategory>, enabl
         modifier = Modifier.clickable(enabled = enabled, onClickLabel = stringResource(R.string.edit_movement), onClick = edit),
         colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surface),
         headlineContent = { Text(title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-        supportingContent = subtitle?.let { { Text(it, maxLines = 1, overflow = TextOverflow.Ellipsis) } },
+        supportingContent = if (subtitle != null) { { Text(subtitle, maxLines = 1, overflow = TextOverflow.Ellipsis) } } else null,
         trailingContent = {
             Text((if (item.kind == Kind.EXPENSE) "−" else "+") + Money.format(item.cents),
                 style = MaterialTheme.typography.titleMedium,

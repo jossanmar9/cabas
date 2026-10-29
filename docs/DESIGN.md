@@ -6,11 +6,11 @@ Cabàs facilita el registre conscient dels diners, la planificació i la reflexi
 
 ## Privacitat
 
-Sense permís d’Internet, comptes ni serveis externs. Base Room en l’emmagatzematge privat de l’app, sense xifrat propi. `allowBackup=false` i les regles XML exclouen les dades del backup automàtic i de la transferència Android entre dispositius. Cal verificar estes regles en dispositius reals abans d’una versió estable. Referència: [documentació oficial de backup](https://developer.android.com/identity/data/autobackup). Encara no hi ha exportació: desinstal·lar l’app elimina els moviments.
+Sense permís d’Internet, comptes ni serveis externs. Base Room en l’emmagatzematge privat de l’app, sense xifrat propi. `allowBackup=false` i les regles XML exclouen les dades del backup automàtic i de la transferència Android entre dispositius. Cal verificar estes regles en dispositius reals abans d’una versió estable. Referència: [documentació oficial de backup](https://developer.android.com/identity/data/autobackup). Les còpies les fa l’usuari des de l’app amb el selector de fitxers del sistema (Storage Access Framework), sense permisos d’emmagatzematge.
 
 ## Tecnologia prevista
 
-Kotlin 2.1.20, Compose BOM 2025.04.01, Room 2.7.1, AGP 8.9.2 i Gradle 8.11.1. Paquet inicial: `org.cabas.app` (no implica titularitat del domini). Android mínim: API 26; compile/target: API 35. La UI observa Room mitjançant Flow i ViewModel. Sense migracions destructives; es versiona l’esquema de Room.
+Kotlin 2.1.20, Compose BOM 2025.04.01, Room 2.7.1 amb KSP, AGP 8.9.2 i Gradle 8.11.1. Paquet inicial: `org.cabas.app` (no implica titularitat del domini). Android mínim: API 26; compile/target: API 35. La UI observa Room mitjançant Flow i ViewModel. Sense migracions destructives; es versiona l’esquema de Room.
 
 ## Imports i dates
 
@@ -31,6 +31,20 @@ La migració explícita v1 → v2 només crea la nova taula. No elimina ni modif
 `movements.categoryId` té una clau forana amb eliminació restringida. La columna enum antiga es conserva per compatibilitat, però els moviments nous utilitzen l’identificador editable. No s’oferix eliminació definitiva de categories: l’arxiu conserva les referències i permet restaurar-les. El nom es resol al llegir, de manera que un canvi de nom es veu també en els moviments antics.
 
 La migració v2 → v3 crea les quatre categories inicials i assigna cada despesa antiga a l’identificador corresponent; els ingressos mantenen categoria nul·la. No altera imports, dates, conceptes ni plans mensuals. Les instal·lacions noves reben les mateixes categories inicials mitjançant el callback de Room.
+
+## Moviments recurrents, reflexions i migració v4
+
+`recurring_movements` guarda plantilles amb import en cèntims, tipus, categoria opcional, dia del mes (1–31), concepte, mes d’inici i últim mes generat. En obrir l’app (i en tornar-hi) es generen, dins d’una transacció, els moviments dels mesos des del següent a l’últim generat fins al mes actual, només si la data ja ha arribat. El dia es limita a la llargària del mes. Com a màxim es recuperen 120 mesos d’una vegada. Editar una plantilla no modifica els moviments ja creats; reactivar-la no recupera els mesos en pausa. No hi ha clau forana a les categories: les categories no s’eliminen mai fora d’una restauració, que es valida sencera.
+
+`monthly_reflections` guarda, per mes, dos textos de fins a 1.000 caràcters. Les respostes numèriques del Kakebo es calculen sempre a partir dels moviments i del pla.
+
+La migració v3 → v4 només crea les dues taules.
+
+## Còpies de seguretat
+
+Format JSON versionat (`"app": "cabas", "format": 1`) amb totes les taules, imports en cèntims enters i dates ISO. La importació es fa en dues fases: primer es llig (màxim 20 MB) i es valida tot (tipus, imports, dates, identificadors únics, noms de categoria, referències); després de confirmar, es buiden i s’omplin totes les taules en una sola transacció Room. Les preferències (tema, data de l’última còpia) no formen part de la còpia.
+
+El CSV usa punt i coma, coma decimal, signe negatiu per a les despeses i BOM UTF-8. Els camps que començarien una fórmula (`=`, `+`, `-`, `@`) es prefixen amb un apòstrof.
 
 ## Preferències i informació
 

@@ -25,13 +25,13 @@ import org.cabas.app.domain.editableAmount
 
 @Composable
 internal fun RecurringContent(model: CabasViewModel, error: String?, modifier: Modifier) {
-    val items by model.recurring.collectAsStateWithLifecycle()
+    val templates by model.recurring.collectAsStateWithLifecycle()
     val state by model.state.collectAsStateWithLifecycle()
     val saving by model.saving.collectAsStateWithLifecycle()
     var creating by rememberSaveable { mutableStateOf(false) }
     var editingId by rememberSaveable { mutableStateOf<Long?>(null) }
     var deleting by remember { mutableStateOf<RecurringMovement?>(null) }
-    val editing = editingId?.let { id -> items.firstOrNull { it.id == id } }
+    val editing = editingId?.let { id -> templates.firstOrNull { it.id == id } }
 
     LazyColumn(modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item { Text(stringResource(R.string.recurring_help)) }
@@ -39,8 +39,8 @@ internal fun RecurringContent(model: CabasViewModel, error: String?, modifier: M
             Button(enabled = !saving && !state.loading, onClick = { model.clearError(); creating = true }) { Text(stringResource(R.string.new_recurring)) }
             if (error != null && !creating && editing == null && deleting == null) Text(error, color = MaterialTheme.colorScheme.error)
         }
-        if (items.isEmpty()) item { Text(stringResource(R.string.no_recurring), style = MaterialTheme.typography.bodyMedium) }
-        items(items, key = { it.id }) { item -> RecurringRow(item, state.categories, !saving) { model.clearError(); editingId = item.id } }
+        if (templates.isEmpty()) item { Text(stringResource(R.string.no_recurring), style = MaterialTheme.typography.bodyMedium) }
+        items(templates, key = { it.id }) { item -> RecurringRow(item, state.categories, !saving) { model.clearError(); editingId = item.id } }
     }
 
     if (creating || editing != null) RecurringDialog(

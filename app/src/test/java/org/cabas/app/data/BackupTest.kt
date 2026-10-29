@@ -75,7 +75,7 @@ class BackupTest {
                 mutated { getJSONArray("movements").getJSONObject(0).put("date", "2026-02-30") },
                 mutated { getJSONArray("movements").getJSONObject(0).put("categoryId", 999) },
                 mutated { getJSONArray("movements").getJSONObject(0).put("kind", "ALTRE") },
-                mutated { getJSONArray("movements").getJSONObject(1).put("id", 1) },
+                mutated { getJSONArray("movements").let { it.getJSONObject(1).put("id", it.getJSONObject(0).getLong("id")) } },
                 mutated { getJSONArray("categories").getJSONObject(1).put("name", "necessitats") },
                 mutated { getJSONArray("recurring").getJSONObject(0).put("dayOfMonth", 32) },
                 mutated { getJSONArray("plans").getJSONObject(0).put("month", "2026-13") },

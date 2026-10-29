@@ -4,6 +4,23 @@ Encara no hi ha cap versió publicada.
 
 ## Sense publicar
 
+### Actualització 0.1.0-dev.4
+
+- Còpia de seguretat completa en JSON, restauració validada i atòmica, i exportació CSV per a fulls de càlcul.
+- Recordatori al resum quan fa més de 30 dies que no es fa cap còpia.
+- Moviments recurrents mensuals amb dia ajustat als mesos curts, pausa i recuperació dels mesos pendents.
+- Reflexió de final de mes amb les quatre preguntes del Kakebo.
+- Edició de moviments en tocar-los i eliminació des del formulari.
+- Selector de data amb calendari en lloc d’escriure-la.
+- Resum de despeses per categoria amb percentatges.
+- Opció de copiar el pla del mes anterior.
+- Barra superior amb icones, llista de moviments agrupada per dies i botó per tornar al mes actual.
+- Tema clar i fosc complets amb la paleta del logo, i fons de finestra correcte en mode fosc.
+- Icona adaptativa del llançador.
+- Room amb KSP en lloc de kapt; migració v3 → v4 que només afig taules.
+- Compilació release amb R8, signatura des de secrets de CI i workflow de publicació per etiquetes.
+- Metadades per a F-Droid.
+
 ### Actualització 0.1.0-dev.3
 
 - Categories de despesa personalitzades i reanomenament de les incloses.
