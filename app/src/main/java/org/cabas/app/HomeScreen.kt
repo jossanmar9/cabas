@@ -99,12 +99,15 @@ internal fun HomeContent(model: CabasViewModel, error: String?, modifier: Modifi
             }
             item { Text(stringResource(R.string.local_only), style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 8.dp)) }
         }
+        // Content-slot variant: no expand/collapse animation, so the label is always present.
         ExtendedFloatingActionButton(
             onClick = { model.clearError(); adding = true },
-            icon = { Icon(Icons.Default.Add, null) },
-            text = { Text(stringResource(R.string.add)) },
             modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
-        )
+        ) {
+            Icon(Icons.Default.Add, null)
+            Spacer(Modifier.width(12.dp))
+            Text(stringResource(R.string.add))
+        }
     }
 
     if (adding || editing != null) MovementDialog(
