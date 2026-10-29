@@ -15,7 +15,7 @@ import org.robolectric.annotation.Config
 import java.time.LocalDate
 
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [28])
+@Config(sdk = [28], qualifiers = "ca")
 class CategoriesDatabaseTest {
     private val context: Context get() = ApplicationProvider.getApplicationContext()
     private fun open(name: String) = CabasDatabase.builder(context, name).build()

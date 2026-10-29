@@ -1,0 +1,22 @@
+Cabàs es una app libre y gratuita de finanzas personales inspirada en el método japonés Kakebo.
+
+Registras los ingresos y los gastos a mano, de forma consciente, y cada mes ves adónde va el dinero.
+
+<b>Funciones</b>
+<ul>
+<li>Ingresos y gastos con fecha, concepto y categoría, con sugerencias de los conceptos ya usados.</li>
+<li>Categorías Kakebo (necesidades, deseos, cultura e imprevistos) editables, con presupuesto mensual propio.</li>
+<li>Resumen mensual con balance y gastos por categoría.</li>
+<li>Presupuesto y objetivo de ahorro para cada mes.</li>
+<li>Movimientos recurrentes: alquiler, nómina o suscripciones se registran solos.</li>
+<li>Reflexión de final de mes con las cuatro preguntas del Kakebo.</li>
+<li>Búsqueda en todos los meses y evolución anual con gráfico.</li>
+<li>Copia de seguridad manual o automática cada semana, restauración y exportación CSV.</li>
+<li>Bloqueo con la huella o el PIN del móvil y recordatorio diario opcional.</li>
+<li>Tema claro, oscuro o del sistema. En valenciano, castellano e inglés.</li>
+</ul>
+
+<b>Privacidad</b>
+Cabàs no pide permiso de Internet. No tiene anuncios, telemetría, cuentas ni conexión bancaria. Los datos solo se guardan en tu dispositivo y tú decides dónde guardas las copias.
+
+Licencia AGPL-3.0-or-later.

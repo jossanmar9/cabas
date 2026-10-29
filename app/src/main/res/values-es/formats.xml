@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="locale_tag">es-ES</string>
+    <string name="month_pattern">LLLL \'de\' yyyy</string>
+    <string name="day_pattern">EEEE d \'de\' MMMM</string>
+</resources>

@@ -1,0 +1,22 @@
+Cabàs is a free and open personal finance app inspired by the Japanese Kakebo method.
+
+You record income and expenses by hand, mindfully, and every month you see where your money goes.
+
+<b>Features</b>
+<ul>
+<li>Income and expenses with date, description and category, with suggestions from the descriptions you have used.</li>
+<li>Editable Kakebo categories (needs, wants, culture and unexpected), each with an optional monthly budget.</li>
+<li>Monthly summary with balance and expenses by category.</li>
+<li>A spending budget and savings goal for every month.</li>
+<li>Recurring transactions: rent, salary or subscriptions are recorded automatically.</li>
+<li>End-of-month reflection with the four Kakebo questions.</li>
+<li>Search across all months and a yearly trends chart.</li>
+<li>Manual or weekly automatic backups, restore and CSV export.</li>
+<li>Lock with your phone’s fingerprint or PIN and an optional daily reminder.</li>
+<li>Light, dark or system theme. In Valencian, Spanish and English.</li>
+</ul>
+
+<b>Privacy</b>
+Cabàs does not request Internet access. No ads, telemetry, accounts or bank connections. Your data stays on your device and you decide where your backups go.
+
+Licence: AGPL-3.0-or-later.

@@ -1,0 +1,1 @@
+Còpies de seguretat i exportació CSV, moviments recurrents, reflexió mensual Kakebo, edició de moviments, selector de data, resum per categories, còpia del pla anterior, nova interfície i icona adaptativa.

@@ -20,6 +20,7 @@ captures/
 # Claus i configuració privada
 *.jks
 *.keystore
+!app/debug.keystore
 keystore.properties
 .env
 .env.*

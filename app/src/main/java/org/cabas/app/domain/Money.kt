@@ -7,6 +7,14 @@ import java.util.Currency
 import java.util.Locale
 import java.text.NumberFormat
 
+/** Locale of the language the interface is shown in; set by the activity from its resources. */
+object AppLocale {
+    val VALENCIAN: Locale = Locale.forLanguageTag("ca-ES-valencia")
+    @Volatile var current: Locale = VALENCIAN
+    @Volatile var monthPattern: String = "LLLL yyyy"
+    @Volatile var dayPattern: String = "EEEE d MMMM"
+}
+
 /** EUR only in this first version. Never use Float/Double for money. */
 object Money {
     const val MAX_CENTS = 99_999_999_999L
@@ -18,7 +26,7 @@ object Money {
                 .setScale(0, RoundingMode.UNNECESSARY).longValueExact()
         }.getOrNull()?.takeIf { it in (if (allowZero) 0L else 1L)..MAX_CENTS }
     }
-    fun format(cents: Long): String = NumberFormat.getCurrencyInstance(Locale.forLanguageTag("ca-ES-valencia")).apply {
+    fun format(cents: Long): String = NumberFormat.getCurrencyInstance(AppLocale.current).apply {
         currency = Currency.getInstance("EUR")
     }.format(BigDecimal.valueOf(cents, 2))
 }

@@ -1,8 +1,42 @@
 # Historial de canvis
 
-Encara no hi ha cap versió publicada.
+## 1.0.0 — 30 d’octubre de 2026
 
-## Sense publicar
+Primera versió estable.
+
+### Novetats de la 1.0
+
+- Cerca en tots els mesos per concepte o categoria, amb filtres i totals.
+- Pantalla Evolució: balanç de l’any, gràfic d’ingressos i despeses per mes, taula mensual i despeses anuals per categoria.
+- Pressupost mensual opcional per a cada categoria, amb avís al 90 % i en superar-lo.
+- Suggeriments de concepte mentre s’escriu, amb el tipus i la categoria de l’últim ús.
+- Accés directe «Afegir despesa» en mantindre premuda la icona.
+- Còpia automàtica setmanal a una carpeta triada per l’usuari, amb les quatre còpies més recents.
+- Bloqueig opcional amb l’empremta, la cara o el PIN del mòbil, i contingut amagat a les apps recents.
+- Recordatori diari opcional al vespre, només si aquell dia no s’ha apuntat res.
+- Interfície en valencià, castellà i anglés; dates i imports segons l’idioma i selector d’idioma per app en Android 13+.
+- Categories inicials en l’idioma de l’app en instal·lacions noves.
+- Pantalla Configuració amb aspecte, bloqueig i recordatori.
+- Room v5 (pressupost de categories) i format de còpia 2, que continua acceptant les còpies del format 1.
+- Clau pública fixa per als APK de prova, perquè s’actualitzen sense desinstal·lar.
+- APK de prova publicat automàticament a Releases per a les branques.
+
+### Actualització 0.1.0-dev.4
+
+- Còpia de seguretat completa en JSON, restauració validada i atòmica, i exportació CSV per a fulls de càlcul.
+- Recordatori al resum quan fa més de 30 dies que no es fa cap còpia.
+- Moviments recurrents mensuals amb dia ajustat als mesos curts, pausa i recuperació dels mesos pendents.
+- Reflexió de final de mes amb les quatre preguntes del Kakebo.
+- Edició de moviments en tocar-los i eliminació des del formulari.
+- Selector de data amb calendari en lloc d’escriure-la.
+- Resum de despeses per categoria amb percentatges.
+- Opció de copiar el pla del mes anterior.
+- Barra superior amb icones, llista de moviments agrupada per dies i botó per tornar al mes actual.
+- Tema clar i fosc complets amb la paleta del logo, i fons de finestra correcte en mode fosc.
+- Icona adaptativa del llançador.
+- Room amb KSP en lloc de kapt; migració v3 → v4 que només afig taules.
+- Compilació release amb R8, signatura des de secrets de CI i workflow de publicació per etiquetes.
+- Metadades per a F-Droid.
 
 ### Actualització 0.1.0-dev.3
 
