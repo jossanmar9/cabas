@@ -16,19 +16,30 @@ class AppNavigationTest {
     @get:Rule val compose = createAndroidComposeRule<MainActivity>()
 
     @Test fun opensCategoriesAppearanceHelpPrivacyAndActualVersion() {
-        compose.onNodeWithText("Menú").performClick()
+        compose.onNodeWithContentDescription("Menú").performClick()
         compose.onNodeWithText("Categories").performClick()
         compose.waitUntil(10_000) { compose.onAllNodesWithText("Necessitats").fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithText("Nova categoria").assertIsEnabled()
-        compose.onNodeWithText("Menú").performClick()
+        compose.onNodeWithContentDescription("Menú").performClick()
+        compose.onNodeWithText("Moviments recurrents").performClick()
+        compose.waitUntil(10_000) { compose.onAllNodesWithText("Nou moviment recurrent").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithText("Nou moviment recurrent").assertIsEnabled()
+        compose.onNodeWithContentDescription("Menú").performClick()
+        compose.onNodeWithText("Còpies i exportació").performClick()
+        compose.onNodeWithText("Fer una còpia de seguretat").assertIsDisplayed()
+        compose.onNodeWithText("Encara no has fet cap còpia de seguretat.").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Menú").performClick()
         compose.onNodeWithText("Aspecte").performClick()
         compose.onNodeWithText("Tema fosc").performClick()
-        compose.onNodeWithText("Menú").performClick()
+        compose.onNodeWithContentDescription("Menú").performClick()
         compose.onNodeWithText("Com funciona").performClick()
-        compose.onNodeWithText("Menú").performClick()
+        compose.onNodeWithContentDescription("Menú").performClick()
         compose.onNodeWithText("Privacitat i dades").performClick()
-        compose.onNodeWithText("Menú").performClick()
+        compose.onNodeWithContentDescription("Menú").performClick()
         compose.onNodeWithText("Quant a Cabàs").performClick()
         compose.onNodeWithText("Versió " + BuildConfig.VERSION_NAME + " (" + BuildConfig.VERSION_CODE + ")").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Tornar").performClick()
+        compose.onNodeWithText("Afegir moviment").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Mes següent").assertIsDisplayed()
     }
 }

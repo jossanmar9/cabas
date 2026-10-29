@@ -17,11 +17,15 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.cabas.app.data.ExpenseCategory
 import org.cabas.app.domain.ThemeMode
 
 internal fun pageTitle(page: String) = when (page) {
     "categories" -> R.string.categories
+    "recurring" -> R.string.recurring
+    "reflection" -> R.string.reflection
+    "data" -> R.string.data
     "appearance" -> R.string.appearance
     "help" -> R.string.help
     "privacy" -> R.string.privacy
@@ -30,7 +34,14 @@ internal fun pageTitle(page: String) = when (page) {
 }
 
 @Composable
-internal fun CategoriesContent(
+internal fun CategoriesContent(model: CabasViewModel, error: String?, modifier: Modifier) {
+    val state by model.state.collectAsStateWithLifecycle()
+    val saving by model.saving.collectAsStateWithLifecycle()
+    CategoriesContent(state.categories, state.loading, state.failed, saving, error, modifier, model::retry, model::clearError, model::saveCategory, model::archiveCategory)
+}
+
+@Composable
+private fun CategoriesContent(
     categories: List<ExpenseCategory>, loading: Boolean, failed: Boolean, saving: Boolean,
     error: String?, modifier: Modifier, retry: () -> Unit, clearError: () -> Unit,
     save: (Long?, String, () -> Unit) -> Unit,
@@ -42,7 +53,7 @@ internal fun CategoriesContent(
     var name by rememberSaveable { mutableStateOf("") }
     var archiveId by rememberSaveable { mutableStateOf<Long?>(null) }
     val visible = categories.filter { showArchived || !it.archived }
-    LazyColumn(modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    LazyColumn(modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item { Text(stringResource(R.string.category_help)) }
         item {
             Button(enabled = !loading && !failed && !saving, onClick = { clearError(); editedId = null; name = ""; editing = true }) { Text(stringResource(R.string.new_category)) }
@@ -117,6 +128,7 @@ internal fun InfoContent(page: String, modifier: Modifier) {
         if (page == "about") {
             Image(painterResource(R.drawable.cabas_logo), null, Modifier.size(100.dp))
             Text(stringResource(R.string.app_name), style = MaterialTheme.typography.headlineLarge)
+            Text(stringResource(R.string.tagline), style = MaterialTheme.typography.titleMedium)
             Text(stringResource(R.string.version, BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE))
             Text(stringResource(R.string.about_body))
             Text(stringResource(R.string.license))
