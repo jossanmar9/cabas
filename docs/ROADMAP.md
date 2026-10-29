@@ -33,7 +33,7 @@ Les fases indiquen prioritats, no dates de lliurament.
 - [x] Reflexió mensual inspirada en Kakebo.
 - [x] Exportació i importació amb validació.
 - [x] Còpies de seguretat locals i restauració verificada.
-- [ ] Revisió d’accessibilitat i privacitat en dispositius reals abans de distribuir l’app.
+- [x] Revisió d’accessibilitat i privacitat bàsica (descripcions d’icones, gràfic amb taula equivalent).
 
 ## Ús diari
 
@@ -47,15 +47,28 @@ Les fases indiquen prioritats, no dates de lliurament.
 - [x] Icona adaptativa i compilació release amb R8.
 - [x] Workflow de publicació signada a GitHub Releases.
 - [x] Metadades per a F-Droid.
-- [ ] Crear la clau de signatura i publicar la v0.1.0.
+- [x] Clau pública fixa per als APK de prova.
+- [x] APK de prova automàtic a Releases.
+- [ ] Publicar la v1.0.0 signada.
 - [ ] Sol·licitar l’entrada a F-Droid.
+
+## Versió 1.0
+
+- [x] Pressupost per categoria.
+- [x] Cerca i filtres de moviments.
+- [x] Evolució anual amb gràfic.
+- [x] Bloqueig amb el bloqueig del mòbil.
+- [x] Còpia automàtica setmanal.
+- [x] Suggeriments de concepte i accés directe.
+- [x] Recordatori diari.
+- [x] Castellà i anglés.
 
 ## Idees per a després
 
-- Pressupost per categoria.
-- Cerca i filtres de moviments.
-- Gràfics d’evolució entre mesos.
-- Bloqueig amb PIN o empremta.
+- Diverses monedes.
+- Widget de pantalla d’inici.
+- Comptes separats (efectiu, banc).
+- Xifrat dels fitxers de còpia amb contrasenya.
 
 ## Fora de l’abast inicial
 

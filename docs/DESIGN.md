@@ -46,6 +46,28 @@ Format JSON versionat (`"app": "cabas", "format": 1`) amb totes les taules, impo
 
 El CSV usa punt i coma, coma decimal, signe negatiu per a les despeses i BOM UTF-8. Els camps que començarien una fórmula (`=`, `+`, `-`, `@`) es prefixen amb un apòstrof.
 
+## Versió 1.0: pressupostos, cerca, evolució i treball en segon pla
+
+**Room v5** afig `expense_categories.monthlyBudgetCents` (nul·lable, igual per a tots els mesos). La migració v4 → v5 només fa `ALTER TABLE … ADD COLUMN`. L’estat del pressupost (`OK`, `NEAR` a partir del 90 %, `OVER`) es calcula amb enters.
+
+**Format de còpia 2**: afig `monthlyBudgetCents` a cada categoria i és obligatori (pot ser `null`). El format 1 s’accepta i es restaura sense pressupostos.
+
+**Cerca** i **evolució** treballen sobre tots els moviments en memòria (l’ús personal té pocs milers de files). La cerca normalitza a minúscules sense diacrítics (NFD) i exigix que totes les paraules apareguen en el concepte, la categoria o el tipus. El gràfic de barres té una descripció accessible i una taula amb les xifres exactes.
+
+**Suggeriments**: una consulta agrupa els conceptes per freqüència i, gràcies a les columnes nues de SQLite amb `MAX(id)`, retorna el tipus i la categoria de l’últim ús.
+
+**Treball en segon pla** amb WorkManager (no necessita Internet):
+- Còpia automàtica: treball periòdic de 7 dies més un d’immediat en activar-la. Escriu en una carpeta triada amb `ACTION_OPEN_DOCUMENT_TREE` i permís persistent, i esborra només els fitxers `cabas-auto-*.json` més antics que els quatre darrers. Si falla, ho reintenta i el resum ho avisa.
+- Recordatori: treball periòdic diari amb retard inicial fins a l’hora triada. No notifica si ja hi ha moviments d’eixe dia. En Android 13+ requerix `POST_NOTIFICATIONS`, demanat en activar-lo.
+
+**Bloqueig** amb `BiometricPrompt` i `BIOMETRIC_WEAK | DEVICE_CREDENTIAL`, compatible des d’Android 8: Cabàs no guarda cap PIN. Es bloqueja en obrir l’app i en tornar després de 60 s en segon pla; mentre està bloquejada no es compon cap pantalla ni diàleg. Amb el bloqueig s’activa `FLAG_SECURE`.
+
+**Idiomes**: recursos per defecte en valencià (AVL), `values-es` i `values-en`. El locale, el patró del mes i el del dia es lligen dels recursos, perquè els imports i les dates seguisquen la llengua de la interfície. `generateLocaleConfig` publica els idiomes per al selector per app d’Android 13+.
+
+**Accés directe** estàtic amb l’acció `org.cabas.app.action.ADD`; l’activitat és `singleTop` i el ViewModel guarda la petició fins que l’app està desbloquejada.
+
+Permisos resultants: `POST_NOTIFICATIONS`, `USE_BIOMETRIC` (AndroidX Biometric) i els que afig WorkManager (`WAKE_LOCK`, `RECEIVE_BOOT_COMPLETED`, `FOREGROUND_SERVICE`, `ACCESS_NETWORK_STATE`). Cap permet accedir a Internet.
+
 ## Preferències i informació
 
 L’aspecte es guarda en SharedPreferences, amb el sistema com a valor inicial. La UI actualitza també el contrast de les barres del sistema. La versió es llig de BuildConfig per evitar text desactualitzat. Els enllaços de llicència i codi font s’obrin explícitament en un navegador extern i gestionen l’absència d’un navegador.

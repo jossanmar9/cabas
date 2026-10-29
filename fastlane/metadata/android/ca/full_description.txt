@@ -8,10 +8,13 @@ Registres els ingressos i les despeses a mà, de manera conscient, i cada mes ve
 <li>Categories Kakebo (necessitats, desitjos, cultura i imprevistos) editables i ampliables.</li>
 <li>Resum mensual amb balanç i despeses per categoria.</li>
 <li>Pressupost i objectiu d’estalvi per a cada mes, amb còpia del pla anterior.</li>
+<li>Pressupost mensual per categoria amb avisos.</li>
 <li>Moviments recurrents: lloguer, nòmina o subscripcions es registren sols.</li>
+<li>Cerca en tots els mesos i evolució anual amb gràfic.</li>
 <li>Reflexió de final de mes amb les quatre preguntes del Kakebo.</li>
-<li>Còpia de seguretat i restauració en un fitxer, i exportació CSV per a fulls de càlcul.</li>
-<li>Tema clar, fosc o del sistema.</li>
+<li>Còpia de seguretat manual o automàtica cada setmana, restauració i exportació CSV.</li>
+<li>Bloqueig amb l’empremta o el PIN del mòbil i recordatori diari opcional.</li>
+<li>Tema clar, fosc o del sistema. En valencià, castellà i anglés.</li>
 </ul>
 
 <b>Privacitat</b>

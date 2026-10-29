@@ -42,15 +42,19 @@ Amb la CLI de GitHub també es pot fer: `gh secret set CABAS_KEYSTORE_BASE64 < f
 3. Fes commit a `main` i crea l’etiqueta amb el mateix nom que `versionName`:
 
 ```sh
-git tag v0.1.0
-git push origin v0.1.0
+git tag v1.0.0
+git push origin v1.0.0
 ```
 
 El workflow **Release** comprova que l’etiqueta i `versionName` coincidixen, passa les proves, compila l’APK amb R8 i el publica a **Releases** amb el seu SHA-256.
 
-## Canvi de l’APK de desenvolupament a la versió signada
+## APK de prova
 
-L’APK de desenvolupament (`app-debug.apk`) està signat amb una clau diferent. Android no deixa instal·lar la versió signada damunt sense desinstal·lar. Abans de canviar:
+Cada branca diferent de `main` publica l’APK de depuració a la versió **prova** de Releases (workflow «APK de prova»). Es signa amb `app/debug.keystore`, una clau **pública** inclosa al repositori a propòsit: només garantix que cada APK de prova s’instal·le damunt de l’anterior. No s’ha d’usar mai per a versions publicades.
+
+## Canvi de l’APK de prova a la versió signada
+
+L’APK de prova està signat amb una clau diferent de la de publicació. Android no deixa instal·lar la versió signada damunt sense desinstal·lar. Abans de canviar:
 
 1. En Cabàs: **Menú → Còpies i exportació → Fer una còpia de seguretat**.
 2. Desinstal·la l’app de desenvolupament i instal·la l’APK de Releases.
@@ -58,4 +62,4 @@ L’APK de desenvolupament (`app-debug.apk`) està signat amb una clau diferent.
 
 ## F-Droid
 
-Cabàs complix els requisits d’F-Droid: codi lliure, sense dependències privatives, sense Internet ni rastreig. Les descripcions per a la botiga estan en `fastlane/metadata/android/ca`. Per proposar-la cal obrir una petició al repositori [fdroiddata](https://gitlab.com/fdroid/fdroiddata) seguint la [guia d’inclusió](https://f-droid.org/docs/Inclusion_How-To/). F-Droid compila l’app des del codi font i la signa amb la seua pròpia clau.
+Cabàs complix els requisits d’F-Droid: codi lliure, sense dependències privatives, sense Internet ni rastreig. Les descripcions per a la botiga estan en `fastlane/metadata/android/` (valencià, castellà i anglés). Per proposar-la cal obrir una petició al repositori [fdroiddata](https://gitlab.com/fdroid/fdroiddata) seguint la [guia d’inclusió](https://f-droid.org/docs/Inclusion_How-To/). F-Droid compila l’app des del codi font i la signa amb la seua pròpia clau.
