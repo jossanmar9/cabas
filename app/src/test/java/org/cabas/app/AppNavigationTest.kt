@@ -23,7 +23,7 @@ class AppNavigationTest {
     @Test fun opensCategoriesAppearanceHelpPrivacyAndActualVersion() {
         compose.onNodeWithContentDescription("Menú").performClick()
         compose.onNodeWithText("Categories").performClick()
-        waitForText("Necessitats")
+        waitForText("Cultura")
         compose.onNodeWithText("Nova categoria").assertIsEnabled()
         compose.onNodeWithContentDescription("Menú").performClick()
         compose.onNodeWithText("Moviments recurrents").performClick()
