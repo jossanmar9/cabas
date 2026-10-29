@@ -2,6 +2,8 @@ name: Release
 on:
   push:
     tags: ['v*']
+  # Publishes the version in versionName from the chosen branch, creating its tag.
+  workflow_dispatch:
 permissions:
   contents: write
 jobs:
@@ -23,9 +25,15 @@ jobs:
       - name: Comprova que l'etiqueta coincidix amb la versió
         run: |
           version=$(sed -n 's/.*versionName = "\(.*\)".*/\1/p' app/build.gradle.kts)
-          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
-            echo "L'etiqueta $GITHUB_REF_NAME no coincidix amb versionName $version" >&2; exit 1
+          if [ "$GITHUB_REF_TYPE" = tag ]; then
+            tag="$GITHUB_REF_NAME"
+            if [ "v$version" != "$tag" ]; then
+              echo "L'etiqueta $tag no coincidix amb versionName $version" >&2; exit 1
+            fi
+          else
+            tag="v$version"
           fi
+          echo "TAG=$tag" >> "$GITHUB_ENV"
       - name: Prepara la clau de signatura
         env:
           KEYSTORE_BASE64: ${{ secrets.CABAS_KEYSTORE_BASE64 }}
@@ -45,9 +53,13 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          apk="cabas-$GITHUB_REF_NAME.apk"
+          apk="cabas-$TAG.apk"
           cp app/build/outputs/apk/release/app-release.apk "$apk"
           sha256sum "$apk" > "$apk.sha256"
-          gh release create "$GITHUB_REF_NAME" "$apk" "$apk.sha256" --title "Cabàs $GITHUB_REF_NAME" --generate-notes
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            gh release upload "$TAG" "$apk" "$apk.sha256" --clobber
+          else
+            gh release create "$TAG" "$apk" "$apk.sha256" --target "$GITHUB_SHA" --title "Cabàs $TAG" --generate-notes --latest
+          fi
       - if: always()
         run: rm -f "$RUNNER_TEMP/cabas-release.jks"
