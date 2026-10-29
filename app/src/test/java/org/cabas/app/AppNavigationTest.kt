@@ -11,7 +11,7 @@ import org.robolectric.annotation.GraphicsMode
 
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
-@Config(sdk = [35], qualifiers = "w360dp-h800dp")
+@Config(sdk = [35], qualifiers = "ca-w360dp-h800dp")
 class AppNavigationTest {
     @get:Rule val compose = createAndroidComposeRule<MainActivity>()
 
@@ -29,8 +29,14 @@ class AppNavigationTest {
         compose.onNodeWithText("Fer una còpia de seguretat").assertIsDisplayed()
         compose.onNodeWithText("Encara no has fet cap còpia de seguretat.").assertIsDisplayed()
         compose.onNodeWithContentDescription("Menú").performClick()
-        compose.onNodeWithText("Aspecte").performClick()
+        compose.onNodeWithText("Configuració").performClick()
         compose.onNodeWithText("Tema fosc").performClick()
+        compose.onNodeWithText("Protegir Cabàs").assertExists()
+        compose.onNodeWithContentDescription("Menú").performClick()
+        compose.onNodeWithText("Evolució").performClick()
+        compose.onNodeWithText("Balanç de l’any").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Cerca").performClick()
+        compose.onNodeWithText("Escriu una paraula o tria un filtre per buscar en tots els mesos.").assertIsDisplayed()
         compose.onNodeWithContentDescription("Menú").performClick()
         compose.onNodeWithText("Com funciona").performClick()
         compose.onNodeWithContentDescription("Menú").performClick()

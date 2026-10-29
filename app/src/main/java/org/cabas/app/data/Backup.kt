@@ -23,11 +23,12 @@ data class BackupData(
 class InvalidBackupException(message: String) : Exception(message)
 
 /**
- * Backup format 1: a UTF-8 JSON document. Amounts are integer cents, dates are ISO `YYYY-MM-DD`
+ * Backup format 2 (format 1 is still accepted): a UTF-8 JSON document. Amounts are integer cents, dates are ISO `YYYY-MM-DD`
  * and months `YYYY-MM`, so the file is readable and has no rounding issues.
  */
 object Backup {
-    const val FORMAT = 1
+    const val FORMAT = 2
+    private val SUPPORTED_FORMATS = 1..FORMAT
     const val MAX_TEXT = 1000
 
     suspend fun read(db: CabasDatabase): BackupData = db.withTransaction {
@@ -54,6 +55,7 @@ object Backup {
         put("exportedOn", exportedOn.toString())
         put("categories", JSONArray(data.categories.map {
             JSONObject().put("id", it.id).put("name", it.name).put("builtin", it.builtin).put("archived", it.archived)
+                .put("monthlyBudgetCents", it.monthlyBudgetCents ?: JSONObject.NULL)
         }))
         put("movements", JSONArray(data.movements.map {
             JSONObject().put("id", it.id).put("cents", it.cents).put("kind", it.kind.name)
@@ -81,11 +83,13 @@ object Backup {
         val root = runCatching { JSONObject(text) }.getOrNull() ?: fail("no és un fitxer JSON")
         if (root.optString("app") != "cabas") fail("no és una còpia de Cabàs")
         val format = root.optInt("format", -1)
-        if (format != FORMAT) fail("format $format no compatible")
+        if (format !in SUPPORTED_FORMATS) fail("format $format no compatible")
 
         val categories = root.array("categories").objects().map {
             val name = categoryName(it.string("name")) ?: fail("nom de categoria no vàlid")
-            ExpenseCategory(it.id("id"), name.display, name.key, it.bool("builtin"), it.bool("archived"))
+            // Format 1 had no category budgets.
+            val budget = if (format >= 2) it.optionalCents("monthlyBudgetCents") else null
+            ExpenseCategory(it.id("id"), name.display, name.key, it.bool("builtin"), it.bool("archived"), budget)
         }
         if (categories.map { it.id }.toSet().size != categories.size) fail("categories repetides")
         if (categories.map { it.nameKey }.toSet().size != categories.size) fail("noms de categoria repetits")
@@ -156,7 +160,7 @@ object Backup {
     private fun JSONObject.optionalLong(name: String): Long? = if (isNull(name)) null else id(name)
     private fun JSONObject.cents(name: String, allowZero: Boolean): Long =
         exactLong(name)?.takeIf { it in (if (allowZero) 0L else 1L)..Money.MAX_CENTS } ?: fail("import no vàlid")
-    private fun JSONObject.optionalCents(name: String): Long? = if (isNull(name)) null else cents(name, allowZero = true)
+    private fun JSONObject.optionalCents(name: String): Long? = if (!has(name)) fail("falta «$name»") else if (isNull(name)) null else cents(name, allowZero = true)
     private fun JSONObject.kind(): Kind = Kind.entries.firstOrNull { it.name == optString("kind") } ?: fail("tipus no vàlid")
     private fun JSONObject.date(name: String): LocalDate =
         runCatching { LocalDate.parse(string(name)) }.getOrNull() ?: fail("data no vàlida")

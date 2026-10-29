@@ -33,6 +33,10 @@ internal fun HomeContent(model: CabasViewModel, error: String?, modifier: Modifi
     val saving by model.saving.collectAsStateWithLifecycle()
     val movementCount by model.movementCount.collectAsStateWithLifecycle()
     val lastBackup by model.lastBackup.collectAsStateWithLifecycle()
+    val autoBackupFolder by model.autoBackupFolder.collectAsStateWithLifecycle()
+    val autoBackupFailed by model.autoBackupFailed.collectAsStateWithLifecycle()
+    val addRequested by model.addRequested.collectAsStateWithLifecycle()
+    val suggestions by model.noteSuggestions.collectAsStateWithLifecycle()
 
     var adding by rememberSaveable { mutableStateOf(false) }
     var editingId by rememberSaveable { mutableStateOf<Long?>(null) }
@@ -43,6 +47,9 @@ internal fun HomeContent(model: CabasViewModel, error: String?, modifier: Modifi
     val editing = editingId?.let { id -> state.items.firstOrNull { it.id == id } }
     val dialogOpen = adding || editing != null || planningMonth != null || deleting != null
     LaunchedEffect(dialogOpen) { onDialogChange(dialogOpen) }
+    LaunchedEffect(addRequested) {
+        if (addRequested) { model.consumeAddRequest(); model.clearError(); editingId = null; adding = true }
+    }
 
     val ready = !state.loading && !state.failed && state.selectedMonth == month
     Box(modifier.fillMaxSize()) {
@@ -61,7 +68,9 @@ internal fun HomeContent(model: CabasViewModel, error: String?, modifier: Modifi
                 else -> {
                     val summary = totals(state.items.map { it.kind to it.cents })
                     item { BalanceCard(summary) }
-                    if (needsBackupReminder(movementCount, lastBackup)) item { BackupReminder(lastBackup) { open("data") } }
+                    if (autoBackupFailed || (autoBackupFolder == null && needsBackupReminder(movementCount, lastBackup))) item {
+                        BackupReminder(lastBackup, autoBackupFailed) { open("data") }
+                    }
                     item {
                         PlanCard(state.plan, summary, !saving) {
                             model.clearError()
@@ -111,7 +120,7 @@ internal fun HomeContent(model: CabasViewModel, error: String?, modifier: Modifi
     }
 
     if (adding || editing != null) MovementDialog(
-        editing = editing, categories = state.categories, saving = saving, error = error,
+        editing = editing, categories = state.categories, saving = saving, error = error, suggestions = suggestions,
         dismiss = { if (!saving) { adding = false; editingId = null; model.clearError() } },
         delete = editing?.let { item -> { model.clearError(); deleting = item } },
     ) { amount, date, note, kind, category ->
@@ -176,10 +185,10 @@ private fun SummaryLine(label: Int, cents: Long) {
 }
 
 @Composable
-private fun BackupReminder(lastBackup: LocalDate?, open: () -> Unit) {
+private fun BackupReminder(lastBackup: LocalDate?, autoFailed: Boolean, open: () -> Unit) {
     Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(stringResource(R.string.backup_reminder_title), style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(if (autoFailed) R.string.auto_backup_failed else R.string.backup_reminder_title), style = MaterialTheme.typography.titleMedium)
             Text(if (lastBackup == null) stringResource(R.string.backup_never) else stringResource(R.string.backup_last, shortDate(lastBackup)))
             FilledTonalButton(onClick = open) { Text(stringResource(R.string.backup_now)) }
         }
@@ -197,13 +206,28 @@ private fun CategoryBreakdown(items: List<Movement>, categories: List<ExpenseCat
                     ?: items.firstOrNull { it.categoryId == id && it.category != null }?.category?.let { stringResource(it.label()) }
                     ?: stringResource(R.string.no_category)
                 val percent = (cents * 100.0 / total).let { if (it < 1 && cents > 0) "<1" else Math.round(it).toString() }
+                val budget = categories.firstOrNull { it.id == id }?.monthlyBudgetCents
+                val status = budget?.let { budgetStatus(cents, it) }
+                val color = when (status) {
+                    BudgetStatus.OVER -> MaterialTheme.colorScheme.error
+                    BudgetStatus.NEAR -> MaterialTheme.colorScheme.tertiary
+                    else -> MaterialTheme.colorScheme.secondary
+                }
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Row(Modifier.fillMaxWidth()) {
                         Text(name, Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
                         Text(Money.format(cents) + " · " + percent + " %")
                     }
-                    LinearProgressIndicator(progress = { (cents.toDouble() / total).toFloat() }, modifier = Modifier.fillMaxWidth(),
-                        color = MaterialTheme.colorScheme.secondary)
+                    LinearProgressIndicator(
+                        progress = { if (budget != null) (if (budget == 0L) 1f else (cents.toDouble() / budget).coerceIn(0.0, 1.0).toFloat()) else (cents.toDouble() / total).toFloat() },
+                        modifier = Modifier.fillMaxWidth(), color = color)
+                    if (budget != null) Text(
+                        when (status) {
+                            BudgetStatus.OVER -> stringResource(R.string.category_over, Money.format(cents - budget))
+                            BudgetStatus.NEAR -> stringResource(R.string.category_near, Money.format(budget - cents))
+                            else -> stringResource(R.string.category_left, Money.format(budget - cents), Money.format(budget))
+                        },
+                        style = MaterialTheme.typography.bodySmall, color = if (status == BudgetStatus.OK) MaterialTheme.colorScheme.onSurfaceVariant else color)
                 }
             }
         }
@@ -222,7 +246,7 @@ private fun ReflectionCard(written: Boolean, currentMonth: Boolean, open: () -> 
 }
 
 @Composable
-private fun MovementRow(item: Movement, categories: List<ExpenseCategory>, enabled: Boolean, edit: () -> Unit) {
+internal fun MovementRow(item: Movement, categories: List<ExpenseCategory>, enabled: Boolean, edit: () -> Unit) {
     val category = categoryLabel(item, categories)
     val title = item.note.ifBlank { category ?: stringResource(R.string.income_single) }
     val subtitle = if (item.kind == Kind.INCOME) stringResource(R.string.income_single) else category.takeIf { item.note.isNotBlank() }

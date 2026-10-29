@@ -7,6 +7,8 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import kotlinx.coroutines.flow.Flow
 import org.cabas.app.domain.Category
 import org.cabas.app.domain.Kind
+import org.cabas.app.domain.categoryName
+import org.cabas.app.R
 
 @Entity(tableName = "movements", indices = [Index("epochDay"), Index("categoryId")],
     foreignKeys = [ForeignKey(entity = ExpenseCategory::class, parentColumns = ["id"], childColumns = ["categoryId"], onDelete = ForeignKey.RESTRICT)])
@@ -25,6 +27,11 @@ interface MovementDao {
     @Query("SELECT * FROM movements WHERE epochDay >= :start AND epochDay < :end ORDER BY epochDay DESC, id DESC")
     fun observeMonth(start: Long, end: Long): Flow<List<Movement>>
     @Query("SELECT COUNT(*) FROM movements") fun observeCount(): Flow<Int>
+    @Query("SELECT * FROM movements ORDER BY epochDay DESC, id DESC") fun observeAll(): Flow<List<Movement>>
+    @Query("SELECT COUNT(*) FROM movements WHERE epochDay = :day") suspend fun countOn(day: Long): Int
+    /** Concepts already used, most frequent first, with the kind and category of their latest use. */
+    @Query("SELECT note, kind, categoryId, MAX(id) AS lastId FROM movements WHERE note != '' GROUP BY note ORDER BY COUNT(*) DESC, lastId DESC LIMIT 300")
+    fun observeNoteSuggestions(): Flow<List<NoteSuggestion>>
     @Query("SELECT * FROM movements ORDER BY epochDay, id") suspend fun all(): List<Movement>
     @Query("SELECT * FROM movements WHERE id = :id") suspend fun get(id: Long): Movement?
     @Insert suspend fun insert(item: Movement): Long
@@ -33,6 +40,8 @@ interface MovementDao {
     @Query("DELETE FROM movements WHERE id = :id") suspend fun delete(id: Long)
     @Query("DELETE FROM movements") suspend fun clear()
 }
+
+data class NoteSuggestion(val note: String, val kind: Kind, val categoryId: Long?, val lastId: Long)
 
 @Entity(tableName = "monthly_plans")
 data class MonthlyPlan(
@@ -108,6 +117,8 @@ data class ExpenseCategory(
     val nameKey: String,
     val builtin: Boolean = false,
     val archived: Boolean = false,
+    /** Optional spending limit for this category, applied to every month. */
+    val monthlyBudgetCents: Long? = null,
 )
 
 @Dao
@@ -119,6 +130,8 @@ interface CategoryDao {
     @Insert suspend fun insert(category: ExpenseCategory): Long
     @Query("UPDATE expense_categories SET name = :name, nameKey = :key WHERE id = :id")
     suspend fun rename(id: Long, name: String, key: String)
+    @Query("UPDATE expense_categories SET monthlyBudgetCents = :cents WHERE id = :id")
+    suspend fun setBudget(id: Long, cents: Long?)
     @Query("UPDATE expense_categories SET archived = :archived WHERE id = :id")
     suspend fun setArchived(id: Long, archived: Boolean)
     @Query("SELECT * FROM expense_categories ORDER BY id") suspend fun all(): List<ExpenseCategory>
@@ -133,7 +146,7 @@ private fun seedV3Categories(db: SupportSQLiteDatabase) {
 
 @Database(
     entities = [Movement::class, MonthlyPlan::class, ExpenseCategory::class, RecurringMovement::class, MonthlyReflection::class],
-    version = 4, exportSchema = true,
+    version = 5, exportSchema = true,
 )
 abstract class CabasDatabase : RoomDatabase() {
     abstract fun movements(): MovementDao
@@ -164,11 +177,25 @@ abstract class CabasDatabase : RoomDatabase() {
                 db.execSQL("CREATE TABLE IF NOT EXISTS `monthly_reflections` (`month` TEXT NOT NULL, `wentWell` TEXT NOT NULL, `improve` TEXT NOT NULL, PRIMARY KEY(`month`))")
             }
         }
-        private val INITIAL_CATEGORIES = object : Callback() {
-            override fun onCreate(db: SupportSQLiteDatabase) { seedV3Categories(db) }
+        /** v5 adds an optional monthly budget to each category. */
+        val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `expense_categories` ADD COLUMN `monthlyBudgetCents` INTEGER")
+            }
+        }
+        /** New installations get the four Kakebo categories named in the app language. */
+        private fun initialCategories(context: Context) = object : Callback() {
+            override fun onCreate(db: SupportSQLiteDatabase) {
+                val names = listOf(R.string.needs, R.string.wants, R.string.culture, R.string.unexpected).map { context.getString(it) }
+                val keys = names.map { categoryName(it)?.key ?: it.lowercase(java.util.Locale.ROOT) }
+                if (keys.toSet().size != 4) { seedV3Categories(db); return }
+                names.forEachIndexed { index, name ->
+                    db.execSQL("INSERT INTO expense_categories (id,name,nameKey,builtin,archived) VALUES (?,?,?,1,0)", arrayOf<Any>(index + 1, name, keys[index]))
+                }
+            }
         }
         fun builder(context: Context, name: String) = Room.databaseBuilder(context.applicationContext, CabasDatabase::class.java, name)
-            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4).addCallback(INITIAL_CATEGORIES)
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5).addCallback(initialCategories(context.applicationContext))
         @Volatile private var instance: CabasDatabase? = null
         fun get(context: Context): CabasDatabase = instance ?: synchronized(this) {
             instance ?: builder(context, "cabas.db").build().also { instance = it }

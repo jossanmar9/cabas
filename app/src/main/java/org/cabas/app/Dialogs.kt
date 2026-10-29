@@ -17,6 +17,8 @@ import androidx.compose.ui.unit.dp
 import org.cabas.app.data.ExpenseCategory
 import org.cabas.app.data.Movement
 import org.cabas.app.data.MonthlyPlan
+import org.cabas.app.data.NoteSuggestion
+import org.cabas.app.domain.suggestionsFor
 import org.cabas.app.domain.Kind
 import org.cabas.app.domain.Money
 import org.cabas.app.domain.editableAmount
@@ -30,10 +32,12 @@ private const val DAY_MILLIS = 86_400_000L
 internal fun selectableCategories(all: List<ExpenseCategory>, currentId: Long?): List<ExpenseCategory> =
     all.filter { !it.archived || it.id == currentId }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun MovementDialog(
     editing: Movement?, categories: List<ExpenseCategory>, saving: Boolean, error: String?,
-    dismiss: () -> Unit, delete: (() -> Unit)?, save: (String, String, String, Kind, Long?) -> Unit,
+    dismiss: () -> Unit, delete: (() -> Unit)?, suggestions: List<NoteSuggestion> = emptyList(),
+    save: (String, String, String, Kind, Long?) -> Unit,
 ) {
     val key = editing?.id
     var amount by rememberSaveable(key) { mutableStateOf(editing?.let { editableAmount(it.cents) } ?: "") }
@@ -54,6 +58,19 @@ internal fun MovementDialog(
                 DateField(date, !saving) { date = it }
                 OutlinedTextField(note, { note = it }, enabled = !saving, label = { Text(stringResource(R.string.note)) },
                     singleLine = true, modifier = Modifier.fillMaxWidth())
+                val matches = remember(note, suggestions) { suggestionsFor(note, suggestions.map { it.note }) }
+                if (matches.isNotEmpty()) FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    matches.forEach { text ->
+                        SuggestionChip(enabled = !saving, label = { Text(text) }, onClick = {
+                            note = text
+                            // A new movement also takes the kind and category used last time with this concept.
+                            if (editing == null) suggestions.firstOrNull { it.note == text }?.let { previous ->
+                                kind = previous.kind
+                                if (previous.categoryId != null && options.any { it.id == previous.categoryId }) categoryId = previous.categoryId
+                            }
+                        })
+                    }
+                }
                 if (kind == Kind.EXPENSE) CategoryPicker(options, selectedCategory, !saving) { categoryId = it }
                 error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
                 if (delete != null) TextButton(enabled = !saving, onClick = delete,

@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import org.cabas.app.data.ExpenseCategory
 import org.cabas.app.data.Movement
+import org.cabas.app.domain.AppLocale
 import org.cabas.app.domain.Category
 import org.cabas.app.domain.Kind
 import java.time.LocalDate
@@ -11,12 +12,12 @@ import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-internal val Valencian: Locale = Locale.forLanguageTag("ca-ES-valencia")
+private val Valencian: Locale get() = AppLocale.current
 
 private fun String.capitalized() = replaceFirstChar { if (it.isLowerCase()) it.titlecase(Valencian) else it.toString() }
 
-internal fun monthLabel(month: YearMonth): String = month.format(DateTimeFormatter.ofPattern("LLLL yyyy", Valencian)).capitalized()
-internal fun dayLabel(date: LocalDate): String = date.format(DateTimeFormatter.ofPattern("EEEE d MMMM", Valencian)).capitalized()
+internal fun monthLabel(month: YearMonth): String = month.format(DateTimeFormatter.ofPattern(AppLocale.monthPattern, Valencian)).capitalized()
+internal fun dayLabel(date: LocalDate): String = date.format(DateTimeFormatter.ofPattern(AppLocale.dayPattern, Valencian)).capitalized()
 internal fun shortDate(date: LocalDate): String = date.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
 
 internal fun Category.label() = when (this) {

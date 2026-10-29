@@ -1,6 +1,7 @@
 package org.cabas.app
 
 import android.app.Application
+import android.content.Intent
 import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -13,6 +14,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.cabas.app.data.*
 import org.cabas.app.domain.*
+import org.cabas.app.work.AppPrefs
+import org.cabas.app.work.Background
 import java.time.LocalDate
 import java.time.YearMonth
 
@@ -45,6 +48,7 @@ class CabasViewModel(application: Application) : AndroidViewModel(application) {
     private val recurringDao = database.recurring()
     private val reflections = database.reflections()
     private val preferences = application.getSharedPreferences("preferences", 0)
+    private val prefs = AppPrefs(application)
 
     private val _themeMode = MutableStateFlow(ThemeMode.entries.firstOrNull { it.name == preferences.getString("theme", null) } ?: ThemeMode.SYSTEM)
     val themeMode = _themeMode.asStateFlow()
@@ -53,8 +57,23 @@ class CabasViewModel(application: Application) : AndroidViewModel(application) {
         _themeMode.value = mode
     }
 
-    private val _lastBackup = MutableStateFlow(preferences.getLong("lastBackupDay", Long.MIN_VALUE).takeIf { it != Long.MIN_VALUE }?.let(LocalDate::ofEpochDay))
+    private val _lastBackup = MutableStateFlow(prefs.lastBackupDay)
     val lastBackup = _lastBackup.asStateFlow()
+    private val _autoBackupFolder = MutableStateFlow(prefs.autoBackupFolder)
+    val autoBackupFolder = _autoBackupFolder.asStateFlow()
+    private val _autoBackupFailed = MutableStateFlow(prefs.lastAutoBackupFailed)
+    val autoBackupFailed = _autoBackupFailed.asStateFlow()
+    private val _reminderHour = MutableStateFlow(prefs.reminderHour)
+    val reminderHour = _reminderHour.asStateFlow()
+    private val _lockEnabled = MutableStateFlow(prefs.lockEnabled)
+    val lockEnabled = _lockEnabled.asStateFlow()
+    /** Set by the launcher shortcut or the reminder; the summary opens the add form and clears it. */
+    private val _addRequested = MutableStateFlow(false)
+    val addRequested = _addRequested.asStateFlow()
+
+    val allMovements = dao.observeAll().catch { emit(emptyList()) }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    val noteSuggestions = dao.observeNoteSuggestions().catch { emit(emptyList()) }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    val allCategories = categoryDao.observeAll().catch { emit(emptyList()) }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     val movementCount = dao.observeCount().catch { emit(0) }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
     val recurring = recurringDao.observeAll().catch { emit(emptyList()) }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
@@ -86,6 +105,60 @@ class CabasViewModel(application: Application) : AndroidViewModel(application) {
     init { generateRecurring() }
 
     fun clearError() { _error.value = null }
+
+    fun handleIntent(intent: Intent?) { if (intent?.action == org.cabas.app.work.ACTION_ADD) _addRequested.value = true }
+    fun consumeAddRequest() { _addRequested.value = false }
+
+    /** Background work may have changed preferences while the app was closed. */
+    fun refreshPreferences() {
+        _lastBackup.value = prefs.lastBackupDay
+        _autoBackupFailed.value = prefs.lastAutoBackupFailed
+        _autoBackupFolder.value = prefs.autoBackupFolder
+    }
+
+    fun enableAutoBackup(folder: Uri) {
+        val app = getApplication<Application>()
+        val flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+        try { app.contentResolver.takePersistableUriPermission(folder, flags) }
+        catch (_: SecurityException) { return fail(R.string.auto_backup_error) }
+        prefs.autoBackupFolder?.let { old -> if (old != folder.toString()) runCatching { app.contentResolver.releasePersistableUriPermission(Uri.parse(old), flags) } }
+        prefs.autoBackupFolder = folder.toString()
+        prefs.lastAutoBackupFailed = false
+        _autoBackupFolder.value = folder.toString()
+        _autoBackupFailed.value = false
+        Background.scheduleAutoBackup(app)
+        _notice.value = UiMessage(R.string.auto_backup_enabled)
+    }
+
+    fun disableAutoBackup() {
+        val app = getApplication<Application>()
+        Background.cancelAutoBackup(app)
+        prefs.autoBackupFolder?.let { old ->
+            runCatching { app.contentResolver.releasePersistableUriPermission(Uri.parse(old), Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION) }
+        }
+        prefs.autoBackupFolder = null
+        prefs.lastAutoBackupFailed = false
+        _autoBackupFolder.value = null
+        _autoBackupFailed.value = false
+    }
+
+    fun setReminder(hour: Int?) {
+        val app = getApplication<Application>()
+        prefs.reminderHour = hour
+        _reminderHour.value = hour
+        if (hour == null) Background.cancelReminder(app) else Background.scheduleReminder(app, hour)
+    }
+
+    fun setLock(enabled: Boolean) {
+        prefs.lockEnabled = enabled
+        _lockEnabled.value = enabled
+    }
+
+    fun saveCategoryBudget(id: Long, input: String, done: () -> Unit) {
+        if (_saving.value) return
+        val cents = if (input.isBlank()) null else Money.parse(input, allowZero = true) ?: return fail(R.string.invalid_plan_amount)
+        write { categoryDao.setBudget(id, cents); done() }
+    }
     fun clearNotice() { _notice.value = null }
     fun retry() { reload.value += 1 }
     fun moveMonth(delta: Long) { month.value = month.value.plusMonths(delta) }
@@ -264,7 +337,7 @@ class CabasViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun markBackup() {
         val today = LocalDate.now()
-        preferences.edit().putLong("lastBackupDay", today.toEpochDay()).apply()
+        prefs.lastBackupDay = today
         _lastBackup.value = today
     }
 

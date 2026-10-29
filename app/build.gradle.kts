@@ -11,13 +11,21 @@ android {
         applicationId = "org.cabas.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 4
-        versionName = "0.1.0-dev.4"
+        versionCode = 5
+        versionName = "1.0.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     // Release signing comes only from environment variables (CI secrets); keys never enter the repo.
     val releaseKeystore = System.getenv("CABAS_KEYSTORE_FILE")?.let { file(it) }?.takeIf { it.exists() }
     signingConfigs {
+        // Public, deliberately shared key for test builds only, so each test APK installs over
+        // the previous one without losing data. Never used for releases.
+        getByName("debug") {
+            storeFile = file("debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
         if (releaseKeystore != null) create("release") {
             storeFile = releaseKeystore
             storePassword = System.getenv("CABAS_KEYSTORE_PASSWORD")
@@ -35,6 +43,8 @@ android {
     }
     // Reproducible, F-Droid friendly APKs: no Google-encrypted dependency metadata.
     dependenciesInfo { includeInApk = false; includeInBundle = false }
+    // Lets Android 13+ offer Valencian, Spanish and English in the per-app language setting.
+    androidResources { generateLocaleConfig = true }
     testOptions { unitTests.isIncludeAndroidResources = true }
     sourceSets.getByName("test").resources.srcDir("$projectDir/schemas")
     buildFeatures { compose = true; buildConfig = true }
@@ -57,6 +67,10 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.9.0")
     implementation("androidx.room:room-runtime:2.7.1")
     implementation("androidx.room:room-ktx:2.7.1")
+    implementation("androidx.work:work-runtime-ktx:2.10.1")
+    implementation("androidx.documentfile:documentfile:1.0.1")
+    implementation("androidx.biometric:biometric:1.1.0")
+    implementation("androidx.fragment:fragment-ktx:1.8.6")
     ksp("androidx.room:room-compiler:2.7.1")
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.robolectric:robolectric:4.14.1")

@@ -8,7 +8,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import android.net.Uri
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.documentfile.provider.DocumentFile
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -19,6 +22,10 @@ internal fun DataContent(model: CabasViewModel, error: String?, modifier: Modifi
     val saving by model.saving.collectAsStateWithLifecycle()
     val lastBackup by model.lastBackup.collectAsStateWithLifecycle()
     val pending by model.pendingImport.collectAsStateWithLifecycle()
+    val autoFolder by model.autoBackupFolder.collectAsStateWithLifecycle()
+    val autoFailed by model.autoBackupFailed.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val chooseFolder = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri -> uri?.let(model::enableAutoBackup) }
     var noFilePicker by remember { mutableStateOf(false) }
     val exportJson = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri -> uri?.let(model::exportBackup) }
     val exportCsv = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/csv")) { uri -> uri?.let(model::exportCsv) }
@@ -35,6 +42,21 @@ internal fun DataContent(model: CabasViewModel, error: String?, modifier: Modifi
             Text(if (lastBackup == null) stringResource(R.string.backup_never) else stringResource(R.string.backup_last, shortDate(lastBackup!!)),
                 style = MaterialTheme.typography.bodySmall)
             Button(enabled = !saving, onClick = { launch { exportJson.launch("cabas-copia-$today.json") } }) { Text(stringResource(R.string.export_backup)) }
+        }
+        Section(R.string.auto_backup_title, R.string.auto_backup_body) {
+            if (autoFolder == null) {
+                OutlinedButton(enabled = !saving, onClick = { launch { chooseFolder.launch(null) } }) { Text(stringResource(R.string.auto_backup_choose)) }
+            } else {
+                val folderName = remember(autoFolder) {
+                    runCatching { DocumentFile.fromTreeUri(context, Uri.parse(autoFolder))?.name }.getOrNull() ?: "—"
+                }
+                Text(stringResource(R.string.auto_backup_folder, folderName))
+                if (autoFailed) Text(stringResource(R.string.auto_backup_failed_body), color = MaterialTheme.colorScheme.error)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(enabled = !saving, onClick = { launch { chooseFolder.launch(null) } }) { Text(stringResource(R.string.auto_backup_change)) }
+                    TextButton(enabled = !saving, onClick = model::disableAutoBackup) { Text(stringResource(R.string.auto_backup_disable)) }
+                }
+            }
         }
         Section(R.string.restore_title, R.string.restore_body) {
             OutlinedButton(enabled = !saving, onClick = { launch { importJson.launch(arrayOf("application/json", "application/octet-stream", "text/plain", "*/*")) } }) {

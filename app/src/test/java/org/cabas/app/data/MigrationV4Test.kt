@@ -15,11 +15,11 @@ import org.robolectric.annotation.Config
 import java.time.LocalDate
 
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [28])
+@Config(sdk = [28], qualifiers = "ca")
 class MigrationV4Test {
     private val context: Context get() = ApplicationProvider.getApplicationContext()
 
-    @Test fun upgradesV3KeepsDataAndAddsRecurringAndReflections() = runBlocking {
+    @Test fun upgradesV3ToLatestKeepsDataAndAddsRecurringAndReflections() = runBlocking {
         val name = "migration-v4.db"
         context.deleteDatabase(name)
         val day = LocalDate.of(2026, 10, 29).toEpochDay()

@@ -15,7 +15,7 @@ import org.robolectric.annotation.Config
 import java.time.LocalDate
 
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [28])
+@Config(sdk = [28], qualifiers = "ca")
 class BackupTest {
     private val context: Context get() = ApplicationProvider.getApplicationContext()
     private fun open(name: String) = CabasDatabase.builder(context, name).build()
@@ -24,6 +24,7 @@ class BackupTest {
     private suspend fun fill(db: CabasDatabase) {
         val custom = db.categories().insert(ExpenseCategory(name = "Casa \"nova\"; 1", nameKey = "casa \"nova\"; 1"))
         db.categories().setArchived(2, true)
+        db.categories().setBudget(1, 25000)
         db.movements().insert(Movement(cents = 1234, kind = Kind.EXPENSE, category = Category.NEEDS, categoryId = 1, epochDay = day, note = "Mercat"))
         db.movements().insert(Movement(cents = 99, kind = Kind.EXPENSE, categoryId = custom, epochDay = day - 40, note = "=SUMA(A1)"))
         db.movements().insert(Movement(cents = 150000, kind = Kind.INCOME, categoryId = null, epochDay = day, note = "Nòmina ✓"))
@@ -69,7 +70,8 @@ class BackupTest {
                 "no és json",
                 "{}",
                 mutated { put("app", "altra") },
-                mutated { put("format", 2) },
+                mutated { put("format", 3) },
+                mutated { getJSONArray("categories").getJSONObject(0).put("monthlyBudgetCents", -1) },
                 mutated { getJSONArray("movements").getJSONObject(0).put("cents", 0) },
                 mutated { getJSONArray("movements").getJSONObject(0).put("cents", 12.5) },
                 mutated { getJSONArray("movements").getJSONObject(0).put("date", "2026-02-30") },
@@ -86,6 +88,30 @@ class BackupTest {
                 assertThrows(InvalidBackupException::class.java) { Backup.fromJson(text) }
             }
             assertEquals(before, Backup.read(db))
+        } finally { db.close(); context.deleteDatabase(name) }
+    }
+
+    @Test fun importsFormatOneBackupsWithoutCategoryBudgets() = runBlocking {
+        val name = "backup-format1.db"
+        context.deleteDatabase(name)
+        val db = open(name)
+        try {
+            fill(db)
+            val v2 = JSONObject(Backup.toJson(Backup.read(db), LocalDate.of(2026, 10, 29)))
+            assertEquals(2, v2.getInt("format"))
+            assertEquals(25000L, v2.getJSONArray("categories").getJSONObject(0).getLong("monthlyBudgetCents"))
+            // An older backup: format 1 and no budget field at all.
+            val v1 = JSONObject(v2.toString()).put("format", 1)
+            val categories = v1.getJSONArray("categories")
+            for (i in 0 until categories.length()) categories.getJSONObject(i).remove("monthlyBudgetCents")
+            val restored = Backup.fromJson(v1.toString())
+            assertTrue(restored.categories.all { it.monthlyBudgetCents == null })
+            Backup.restore(db, restored)
+            assertNull(db.categories().get(1)!!.monthlyBudgetCents)
+            assertEquals(3, db.movements().observeCount().first())
+            // Format 2 requires the field, even if empty.
+            val broken = JSONObject(v2.toString()).apply { getJSONArray("categories").getJSONObject(0).remove("monthlyBudgetCents") }
+            assertThrows(InvalidBackupException::class.java) { Backup.fromJson(broken.toString()) }
         } finally { db.close(); context.deleteDatabase(name) }
     }
 
